@@ -1,11 +1,12 @@
 #include <greeter/greeter.h>
-#include <greeter/version.h>
+#include <zregex/version.h>
 
 #include <cxxopts.hpp>
 #include <iostream>
 #include <string>
 #include <unordered_map>
 
+using namespace std;
 auto main(int argc, char** argv) -> int {
   const std::unordered_map<std::string, greeter::LanguageCode> languages{
       {"en", greeter::LanguageCode::EN},
@@ -36,7 +37,7 @@ auto main(int argc, char** argv) -> int {
   }
 
   if (result["version"].as<bool>()) {
-    std::cout << "Greeter, version " << GREETER_VERSION << std::endl;
+    std::cout << "Greeter, version " << ZREGEX_VERSION << std::endl;
     return 0;
   }
 

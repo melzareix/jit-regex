@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 # Note: update this to your new project's name and version
 project(
-  Greeter
+  ZRegex
   VERSION 1.0
   LANGUAGES CXX
 )
@@ -25,6 +25,13 @@ include(cmake/CPM.cmake)
 
 # PackageProject.cmake will be used to make our target installable
 CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.8.0")
+
+# Google Re2 as fallback
+CPMAddPackage(
+  NAME re2
+  GIT_TAG 2021-11-01
+  GITHUB_REPOSITORY google/re2
+)
 
 CPMAddPackage(
   NAME fmt
@@ -53,6 +60,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+target_link_libraries(${PROJECT_NAME} PRIVATE re2)
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
