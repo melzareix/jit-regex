@@ -7,12 +7,11 @@ using namespace greeter;
 Greeter::Greeter(std::string _name) : name(std::move(_name)) {}
 
 std::string Greeter::greet(LanguageCode lang) const {
-   int matchResult = RE2::FullMatch("hello", "h.*o"); 
 
   switch (lang) {
     default:
     case LanguageCode::EN:
-      return fmt::format("Hello, {} {}!", name, matchResult);
+      return fmt::format("Hello, {}!", name);
     case LanguageCode::DE:
       return fmt::format("Hallo {}!", name);
     case LanguageCode::ES:
