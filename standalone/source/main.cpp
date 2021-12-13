@@ -1,4 +1,5 @@
 #include <parser/AutomataVisitor.h>
+#include <codegen/codegen.h>
 #include <parser/RegExp.h>
 #include <zregex/version.h>
 
@@ -9,11 +10,6 @@
 using namespace std;
 auto main(int argc, char** argv) -> int {
   std::string s(argv[1]);
-  RegExp r(s);
-  auto node = r.parse();
-
-  // evaluate ast and create the automata
-  AutomataVisitor* v = new AutomataVisitor();
-  node->accept(v);
+  Codegen::gen_regex(s);
   return 0;
 }

@@ -49,7 +49,7 @@ private:
   bool match(char c);
   bool has_more();
   char next();
-  bool check(uint32_t flag);
+  bool check(uint32_t flag) const;
 
 public:
   std::string curr_regexp;

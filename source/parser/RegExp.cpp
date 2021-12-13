@@ -128,6 +128,6 @@ char RegExp::next() {
   return regexp[pos++];
 }
 
-bool RegExp::check(uint32_t flag) { return (compiler_flags & flag) != 0; }
+bool RegExp::check(uint32_t flag) const { return (compiler_flags & flag) != 0; }
 
 IBaseNode* RegExp::parse() { return parse_union_expr(); }

@@ -4,6 +4,6 @@
 
 class AnyCharNode : public IBaseNode {
 public:
-  AnyCharNode() {}
+  AnyCharNode() = default;
   void accept(class IVisitor* v) override { v->visit(this); }
 };

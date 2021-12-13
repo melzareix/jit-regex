@@ -1,37 +1,53 @@
 #pragma once
 
-#include <parser/IVisitor.h>
-#include <parser/nodes/AnyCharNode.h>
-#include <parser/nodes/AnyStringNode.h>
-#include <parser/nodes/AutomataNode.h>
-#include <parser/nodes/CharNode.h>
-#include <parser/nodes/CharRangeNode.h>
-#include <parser/nodes/ComplementNode.h>
-#include <parser/nodes/ConcatNode.h>
-#include <parser/nodes/EmptyNode.h>
-#include <parser/nodes/IntersectionNode.h>
-#include <parser/nodes/IntervalNode.h>
-#include <parser/nodes/OptionalNode.h>
-#include <parser/nodes/RepeatNode.h>
-#include <parser/nodes/StringNode.h>
-#include <parser/nodes/UnionNode.h>
+#include "../automaton/AutomatonFactory.h"
+#include "../parser/IVisitor.h"
+#include "../parser/nodes/AnyCharNode.h"
+#include "../parser/nodes/CharNode.h"
+#include "../parser/nodes/CharRangeNode.h"
+#include "../parser/nodes/ComplementNode.h"
+#include "../parser/nodes/ConcatNode.h"
+#include "../parser/nodes/IntersectionNode.h"
+#include "../parser/nodes/OptionalNode.h"
+#include "../parser/nodes/RepeatNode.h"
+#include "../parser/nodes/StringNode.h"
+#include "../parser/nodes/UnionNode.h"
 
 #include <iostream>
 
-class AutomataVisitor : public IVisitor {
+#include "../automaton/AutomatonFactory.h"
+#include "IVisitor.h"
+#include "nodes/IBaseNode.h"
+
+class AutomataVisitor : public ValueGetter<AutomataVisitor, IBaseNode, Automaton *>,
+                        public IVisitor {
+private:
+
 public:
-  void visit(CharRangeNode *v) { v->accept(this); }
-  void visit(ComplementNode *v) { v->accept(this); }
-  void visit(ConcatNode *v) { v->accept(this); }
-  void visit(EmptyNode *v) { v->accept(this); }
-  void visit(IntervalNode *v) { v->accept(this); }
-  void visit(IntersectionNode *v) { v->accept(this); }
-  void visit(OptionalNode *v) { std::cout << "optional" << std::endl; }
-  void visit(AnyCharNode *v) { v->accept(this); }
-  void visit(AnyStringNode *v) { v->accept(this); }
-  void visit(AutomataNode *v) { v->accept(this); }
-  void visit(CharNode *v) { v->accept(this); }
-  void visit(RepeatNode *v) { std::cout << "repeat: " << std::endl; }
-  void visit(StringNode *v) { std::cout << "ss " << v->get_str() << std::endl; }
-  void visit(UnionNode *v) { std::cout << "uuuuu" << std::endl; }
+  void visit(CharRangeNode *v)  override{
+    Return(AutomatonFactory::create_char_range_automaton(v->get_start(), v->get_end()));
+  }
+  void visit(ComplementNode *v) override{ std::cout << "complement!" << std::endl; }
+  void visit(ConcatNode *v) override {
+    auto lhs_automaton = GetValue(v->get_lhs());
+    auto rhs_automaton = GetValue(v->get_rhs());
+
+    Return(AutomatonFactory::create_concat_automaton(lhs_automaton, rhs_automaton));
+  }
+  void visit(IntersectionNode *v) override {}
+  void visit(OptionalNode *v) override { std::cout << "optional" << std::endl; }
+  void visit(AnyCharNode *v) override {
+    //TODO(melzarei) handling unicode related issues
+    Return(AutomatonFactory::create_char_range_automaton('\u0000', (char)(128)));
+  }
+  void visit(AutomataNode *v) override {}
+  void visit(CharNode *v) override { std::cout << "ok"; }
+  void visit(RepeatNode *v) override {
+    auto exp_automaton = GetValue(v->exp());
+    Return(AutomatonFactory::create_kleene_star_automata(exp_automaton));
+  }
+  void visit(StringNode *v) override {
+    Return(AutomatonFactory::create_string_automaton(v->get_str()));
+  }
+  void visit(UnionNode *v) override { std::cout << "uuuuu" << std::endl; }
 };
