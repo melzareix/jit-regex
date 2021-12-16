@@ -1,5 +1,6 @@
 #include <parser/AutomataVisitor.h>
 #include <codegen/codegen.h>
+#include <codegen/llvmCodegen.h>
 #include <parser/RegExp.h>
 #include <zregex/version.h>
 
@@ -10,6 +11,13 @@
 using namespace std;
 auto main(int argc, char** argv) -> int {
   std::string s(argv[1]);
-  Codegen::gen_regex(s);
+  Codegen::generate(s);
+
+  LLVMCodeGen llvm;
+  auto p = std::string("[a-a]");
+  llvm.compile(p);
+  llvm.run(s);
+//  llvm.run("ab");
+//  llvm.run("b");
   return 0;
 }

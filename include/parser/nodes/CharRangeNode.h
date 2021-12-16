@@ -4,12 +4,13 @@
 
 class CharRangeNode : public IBaseNode {
 private:
-  char start;
-  char end;
+  char start_;
+  char end_;
 
 public:
-  CharRangeNode(char start, char end) : start(start), end(end) {}
+  CharRangeNode(char start, char end) : start_(start), end_(end) {}
   void accept(class IVisitor* v) override { v->visit(this); }
-  char get_start() { return start; }
-  char get_end() { return end; }
+
+  [[nodiscard]] const char& start() const { return start_; }
+  [[nodiscard]] const char& end() const { return end_; }
 };

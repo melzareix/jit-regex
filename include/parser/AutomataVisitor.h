@@ -25,7 +25,7 @@ private:
 
 public:
   void visit(CharRangeNode *v)  override{
-    Return(AutomatonFactory::create_char_range_automaton(v->get_start(), v->get_end()));
+    Return(AutomatonFactory::create_char_range_automaton(v->start(), v->end()));
   }
   void visit(ComplementNode *v) override{ std::cout << "complement!" << std::endl; }
   void visit(ConcatNode *v) override {
