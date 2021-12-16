@@ -10,13 +10,14 @@
 
 using namespace std;
 auto main(int argc, char** argv) -> int {
-  std::string s(argv[1]);
-  Codegen::generate(s);
+  std::string pattern(argv[1]);
+  std::string inp(argv[2]);
+  Codegen::generate(pattern);
 
   LLVMCodeGen llvm;
-  auto p = std::string("[a-a]");
+  auto p = std::string(pattern);
   llvm.compile(p);
-  llvm.run(s);
+  llvm.run(inp);
 //  llvm.run("ab");
 //  llvm.run("b");
   return 0;
