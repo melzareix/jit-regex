@@ -62,17 +62,24 @@ private:
     auto l = t.min(), h = t.max();
     auto to = t.dest();
     spdlog::info("Transition [{}, {}] -> State{}", l, h, to);
+    auto next_state = llvm::BasicBlock::Create(*context.getContext(),
+                                               "s" + std::to_string(from) + "_cnt", parent);
+    auto true_state = get_or_create_block(to, parent);
+
     // single condition
     // if (c == %1) br %s1;
     if (l == h) {
       auto eq = builder->CreateICmpEQ(c, builder->getInt8(l));
-      auto next_state = llvm::BasicBlock::Create(*context.getContext(),
-                                                 "s" + std::to_string(from) + "_cnt", parent);
-      auto true_state = get_or_create_block(to, parent);
       builder->CreateCondBr(eq, true_state, next_state);
-      return next_state;
+    } else {
+      // if (c >= l && c <= h)
+      auto cgel = builder->CreateICmpUGE(c, builder->getInt8(l));
+      auto cleh = builder->CreateICmpULE(c, builder->getInt8(h));
+      auto cnd = builder->CreateAnd(cgel, cleh);
+      builder->CreateCondBr(cnd, true_state, next_state);
     }
-    return nullptr;
+
+    return next_state;
   }
 
   void state_(State& s, llvm::Function* parent, llvm::Value* idx, llvm::Value* str, llvm::Value* n,
