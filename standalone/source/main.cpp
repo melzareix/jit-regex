@@ -1,24 +1,22 @@
-#include <parser/AutomataVisitor.h>
-#include <codegen/codegen.h>
 #include <codegen/llvmCodegen.h>
-#include <parser/RegExp.h>
-#include <zregex/version.h>
 
 #include <cxxopts.hpp>
-#include <iostream>
 #include <string>
 
 using namespace std;
 auto main(int argc, char** argv) -> int {
-  std::string pattern(argv[1]);
-  std::string inp(argv[2]);
-  Codegen::generate(pattern);
+  cxxopts::Options options("ZRegex", "JIT Compiled LLVM Regex Engine");
+  options.add_options()("r,regex", "Regex", cxxopts::value<std::string>())(
+      "s,string", "String to match the pattern against", cxxopts::value<std::string>())(
+      "d,debug", "Enable debugging");
 
-  LLVMCodeGen llvm;
-  auto p = std::string(pattern);
-  llvm.compile(p);
+  auto result = options.parse(argc, argv);
+  auto debug_mode = result["debug"].as<bool>();
+  spdlog::info("Debugging Enabled : {}", debug_mode);
+  LLVMCodeGen llvm(debug_mode);
+  auto rgx = result["regex"].as<std::string>();
+  auto inp = result["string"].as<std::string>();
+  llvm.compile(rgx);
   llvm.run(inp);
-//  llvm.run("ab");
-//  llvm.run("b");
   return 0;
 }

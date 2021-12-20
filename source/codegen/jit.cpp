@@ -16,7 +16,7 @@ using JIT = moderndbs::JIT;
 
 namespace {
 
-  static void optimizeModule(llvm::Module& module) {
+  void optimizeModule(llvm::Module& module, bool& debug_mode) {
     // Create a function pass manager
     auto passManager = std::make_unique<llvm::legacy::FunctionPassManager>(&module);
 
@@ -28,34 +28,39 @@ namespace {
     passManager->add(llvm::createCFGSimplificationPass());
     passManager->doInitialization();
 
-    spdlog::info("################ BEFORE OPTIMIZATION PASS ################");
-    module.print(llvm::errs(), nullptr);
+    if (debug_mode) {
+      spdlog::info("################ BEFORE OPTIMIZATION PASS ################");
+      module.print(llvm::errs(), nullptr);
+    }
 
     // Run the optimizations
     for (auto& fn : module) {
       passManager->run(fn);
     }
-    spdlog::info("################ AFTER OPTIMIZATION PASS ################");
-    module.print(llvm::errs(), nullptr);
+    if (debug_mode) {
+      spdlog::info("################ AFTER OPTIMIZATION PASS ################");
+      module.print(llvm::errs(), nullptr);
+    }
   }
 
 }  // namespace
 
-JIT::JIT(llvm::orc::ThreadSafeContext& ctx)
+JIT::JIT(llvm::orc::ThreadSafeContext& ctx, bool& d)
     : target_machine(llvm::EngineBuilder().selectTarget()),
       data_layout(target_machine->createDataLayout()),
       execution_session(),
       context(ctx),
+      debug_mode(d),
       object_layer(execution_session,
                    []() { return std::make_unique<llvm::SectionMemoryManager>(); }),
       compile_layer(execution_session, object_layer,
                     std::make_unique<llvm::orc::SimpleCompiler>(*target_machine)),
-      optimize_layer(
-          execution_session, compile_layer,
-          [](llvm::orc::ThreadSafeModule m, const llvm::orc::MaterializationResponsibility&) {
-            optimizeModule(*m.getModuleUnlocked());
-            return m;
-          }),
+      optimize_layer(execution_session, compile_layer,
+                     [this](llvm::orc::ThreadSafeModule m,
+                                   const llvm::orc::MaterializationResponsibility&) {
+                       optimizeModule(*m.getModuleUnlocked(), this->debug_mode);
+                       return m;
+                     }),
       mainDylib(cantFail(execution_session.createJITDylib("<main>"), "createJITDylib failed")) {
   // Lookup symbols in host process
   auto generator = llvm::cantFail(llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(

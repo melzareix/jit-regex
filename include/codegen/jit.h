@@ -3,17 +3,18 @@
 
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
-#include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
-#include <llvm/ExecutionEngine/SectionMemoryManager.h>
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
 #include <llvm/ExecutionEngine/Orc/IRTransformLayer.h>
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
+#include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
+#include <llvm/ExecutionEngine/SectionMemoryManager.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/Mangler.h>
 #include <llvm/Support/DynamicLibrary.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetMachine.h>
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -32,7 +33,8 @@ namespace moderndbs {
     /// The context
     llvm::orc::ThreadSafeContext& context;
 
-    /// Optimization function using OptimizeFunction = std::function<std::unique_ptr<llvm::Module>(std::unique_ptr<llvm::Module>)>;
+    /// Optimization function using OptimizeFunction =
+    /// std::function<std::unique_ptr<llvm::Module>(std::unique_ptr<llvm::Module>)>;
 
     /// The object layer.
     llvm::orc::RTDyldObjectLinkingLayer object_layer;
@@ -43,9 +45,10 @@ namespace moderndbs {
     /// The main JITDylib
     llvm::orc::JITDylib& mainDylib;
 
+    bool debug_mode;
   public:
     /// The constructor.
-    JIT(llvm::orc::ThreadSafeContext& ctx);
+    JIT(llvm::orc::ThreadSafeContext& ctx, bool& debug_mode);
 
     /// Get the target machine.
     auto& getTargetMachine() { return *target_machine; }

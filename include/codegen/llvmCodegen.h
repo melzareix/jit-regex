@@ -47,6 +47,7 @@ private:
   std::map<uint32_t, llvm::BasicBlock*> states_to_blocks;
   std::unique_ptr<moderndbs::JIT> jit;
   bool (*fnPtr)(char* string, uint64_t i){};
+  bool debug_mode;
 
   llvm::BasicBlock* get_or_create_block(uint32_t k, llvm::Function* parent) {
     if (auto it{states_to_blocks.find(k)}; it == std::end(states_to_blocks)) {
@@ -163,16 +164,6 @@ private:
     }
   }
 
-  void test() {
-    auto ctx = context.getContext();
-    auto ft = llvm::Type::getInt64Ty(*ctx);
-    auto* funcT = llvm::FunctionType::get(ft, false);
-    auto funcFn
-        = llvm::cast<llvm::Function>(module->getOrInsertFunction("func", funcT).getCallee());
-    llvm::BasicBlock* funcBlockEntry = llvm::BasicBlock::Create(*ctx, "entry", funcFn);
-    builder->SetInsertPoint(funcBlockEntry);
-    builder->CreateRet(builder->getInt64(1));
-  }
   void compile_pattern(const std::string& pattern) {
     RegExp regexp(pattern);
     auto root = regexp.parse();
@@ -190,7 +181,7 @@ private:
   }
 
 public:
-  LLVMCodeGen() {
+  explicit LLVMCodeGen(bool debug_mode = false) : debug_mode(debug_mode) {
     // JIT initializers
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -201,10 +192,10 @@ public:
     module = std::make_unique<llvm::Module>("rgx_module", *context.getContext());
     builder = std::make_unique<llvm::IRBuilder<>>(*context.getContext());
     fnPtr = nullptr;
-    jit = std::make_unique<moderndbs::JIT>(context);
+    jit = std::make_unique<moderndbs::JIT>(context, debug_mode);
   }
 
-  void compile(std::string& pattern) {
+  void compile(const std::string& pattern) {
     this->compile_pattern(pattern);
     this->traverse_();
 
