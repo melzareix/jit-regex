@@ -45,10 +45,9 @@ namespace moderndbs {
     /// The main JITDylib
     llvm::orc::JITDylib& mainDylib;
 
-    bool debug_mode;
   public:
     /// The constructor.
-    JIT(llvm::orc::ThreadSafeContext& ctx, bool& debug_mode);
+    JIT(llvm::orc::ThreadSafeContext& ctx);
 
     /// Get the target machine.
     auto& getTargetMachine() { return *target_machine; }

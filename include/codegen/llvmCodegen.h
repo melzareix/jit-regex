@@ -47,7 +47,6 @@ private:
   std::map<uint32_t, llvm::BasicBlock*> states_to_blocks;
   std::unique_ptr<moderndbs::JIT> jit;
   bool (*fnPtr)(char* string, uint64_t i){};
-  bool debug_mode;
 
   llvm::BasicBlock* get_or_create_block(uint32_t k, llvm::Function* parent) {
     if (auto it{states_to_blocks.find(k)}; it == std::end(states_to_blocks)) {
@@ -58,14 +57,17 @@ private:
   }
 
   llvm::BasicBlock* transition_(uint32_t from, Transition& t, llvm::Value* c,
-                                llvm::Function* parent) {
+                                llvm::Function* parent, llvm::BasicBlock* blk) {
     auto l = t.min(), h = t.max();
     auto to = t.dest();
-    spdlog::info("Transition [{}, {}] -> State{}", l, h, to);
+    spdlog::debug("Transition [{}, {}] -> State{}", l, h, to);
     auto next_state = llvm::BasicBlock::Create(*context.getContext(),
-                                               "s" + std::to_string(from) + "_cnt", parent);
+                                               "s" + std::to_string(from) + "_nt", parent);
     auto true_state = get_or_create_block(to, parent);
 
+    if (blk != nullptr) {
+      builder->SetInsertPoint(blk);
+    }
     // single condition
     // if (c == %1) br %s1;
     if (l == h) {
@@ -126,11 +128,11 @@ private:
     auto inc = builder->CreateAdd(load_idx, builder->getInt64(1));
     builder->CreateStore(inc, idx);
 
-    spdlog::info("State{}: Transitions Size: {}", s.id(), s.transitions().size());
+    spdlog::debug("State{}: Transitions Size: {}", s.id(), s.transitions().size());
 
-    llvm::BasicBlock* last_block;
+    llvm::BasicBlock* last_block = nullptr;
     for (auto t : s.transitions()) {
-      last_block = transition_(s.id(), t, c, parent);
+      last_block = transition_(s.id(), t, c, parent, last_block);
     }
     if (last_block != nullptr) {
       builder->SetInsertPoint(last_block);
@@ -188,7 +190,7 @@ private:
   }
 
 public:
-  explicit LLVMCodeGen(bool debug_mode = false) : debug_mode(debug_mode) {
+  LLVMCodeGen() {
     // JIT initializers
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -199,7 +201,15 @@ public:
     module = std::make_unique<llvm::Module>("rgx_module", *context.getContext());
     builder = std::make_unique<llvm::IRBuilder<>>(*context.getContext());
     fnPtr = nullptr;
-    jit = std::make_unique<moderndbs::JIT>(context, debug_mode);
+    jit = std::make_unique<moderndbs::JIT>(context);
+  }
+
+  void compile(Automaton* json_aut) {
+    automaton = std::unique_ptr<Automaton>(json_aut);
+    this->traverse_();
+
+    auto e = jit->addModule(std::move(module));
+    fnPtr = reinterpret_cast<bool (*)(char*, uint64_t n)>(jit->getPointerToFunction("traverse"));
   }
 
   void compile(const std::string& pattern) {
@@ -210,9 +220,11 @@ public:
     fnPtr = reinterpret_cast<bool (*)(char*, uint64_t n)>(jit->getPointerToFunction("traverse"));
   }
 
-  void run(const std::string& sss) {
+  bool run(const std::string& sss) {
     auto sz = sss.size();
-    spdlog::info("Result: {}", fnPtr(const_cast<char*>(sss.c_str()), sz));
+    auto r = fnPtr(const_cast<char*>(sss.c_str()), sz);
+    spdlog::debug("Result of Regex on string {} : {}", sss, r);
+    return r;
   }
 };
 

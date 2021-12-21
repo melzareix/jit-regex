@@ -16,7 +16,7 @@ using JIT = moderndbs::JIT;
 
 namespace {
 
-  void optimizeModule(llvm::Module& module, bool& debug_mode) {
+  void optimizeModule(llvm::Module& module) {
     // Create a function pass manager
     auto passManager = std::make_unique<llvm::legacy::FunctionPassManager>(&module);
 
@@ -28,8 +28,8 @@ namespace {
     passManager->add(llvm::createCFGSimplificationPass());
     passManager->doInitialization();
 
-    if (debug_mode) {
-      spdlog::info("################ BEFORE OPTIMIZATION PASS ################");
+    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
+      spdlog::debug("################ BEFORE OPTIMIZATION PASS ################");
       module.print(llvm::errs(), nullptr);
     }
 
@@ -37,7 +37,7 @@ namespace {
     for (auto& fn : module) {
       passManager->run(fn);
     }
-    if (debug_mode) {
+    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
       spdlog::info("################ AFTER OPTIMIZATION PASS ################");
       module.print(llvm::errs(), nullptr);
     }
@@ -45,12 +45,11 @@ namespace {
 
 }  // namespace
 
-JIT::JIT(llvm::orc::ThreadSafeContext& ctx, bool& d)
+JIT::JIT(llvm::orc::ThreadSafeContext& ctx)
     : target_machine(llvm::EngineBuilder().selectTarget()),
       data_layout(target_machine->createDataLayout()),
       execution_session(),
       context(ctx),
-      debug_mode(d),
       object_layer(execution_session,
                    []() { return std::make_unique<llvm::SectionMemoryManager>(); }),
       compile_layer(execution_session, object_layer,
@@ -58,7 +57,7 @@ JIT::JIT(llvm::orc::ThreadSafeContext& ctx, bool& d)
       optimize_layer(execution_session, compile_layer,
                      [this](llvm::orc::ThreadSafeModule m,
                                    const llvm::orc::MaterializationResponsibility&) {
-                       optimizeModule(*m.getModuleUnlocked(), this->debug_mode);
+                       optimizeModule(*m.getModuleUnlocked());
                        return m;
                      }),
       mainDylib(cantFail(execution_session.createJITDylib("<main>"), "createJITDylib failed")) {
