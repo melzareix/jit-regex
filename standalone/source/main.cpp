@@ -9,6 +9,7 @@
 #include <string>
 
 #include "spdlog/cfg/env.h"
+#include <benchmark/benchmark.h>
 
 using namespace std::chrono;
 

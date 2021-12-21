@@ -116,13 +116,13 @@ void Automaton::to_dfa() {
   ////    State s = states[work_list.front()];
   //  }
 }
-Automaton* Automaton::from_json(std::ifstream& ifs) {
+std::unique_ptr<Automaton> Automaton::from_json(std::ifstream& ifs) {
   nlohmann::json j = nlohmann::json::parse(ifs);
   auto states = j["states"];
   auto accept = j["acceptStates"];
   auto is = j["initialState"];
 
-  auto* automaton = new Automaton();
+  auto automaton = std::make_unique<Automaton>();
 
   // is
   automaton->initial() = is["id"];
@@ -133,7 +133,6 @@ Automaton* Automaton::from_json(std::ifstream& ifs) {
     auto i = as["id"];
     acceptset.insert(i);
   }
-
 
   // states
   for (auto as : states) {
@@ -150,7 +149,6 @@ Automaton* Automaton::from_json(std::ifstream& ifs) {
     }
     automaton->add_state(s);
   }
-
 
   return automaton;
 }

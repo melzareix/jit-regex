@@ -50,6 +50,15 @@ CPMAddPackage(
 
 # json
 CPMAddPackage("gh:nlohmann/json@3.9.1")
+
+#micro-benchmark
+CPMAddPackage(
+        NAME benchmark
+        GIT_TAG v1.6.0
+        GITHUB_REPOSITORY google/benchmark
+        OPTIONS "BENCHMARK_ENABLE_TESTING NO"
+)
+
 # llvm
 if (APPLE)
     list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/llvm@12/lib/cmake")
@@ -86,6 +95,7 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
 target_link_libraries(${PROJECT_NAME} PUBLIC re2)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)
+target_link_libraries(${PROJECT_NAME} PUBLIC benchmark)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LLVM_LIBS})
 

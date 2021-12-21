@@ -204,8 +204,8 @@ public:
     jit = std::make_unique<moderndbs::JIT>(context);
   }
 
-  void compile(Automaton* json_aut) {
-    automaton = std::unique_ptr<Automaton>(json_aut);
+  void compile(std::unique_ptr<Automaton> json_aut) {
+    automaton = std::move(json_aut);
     this->traverse_();
 
     auto e = jit->addModule(std::move(module));
