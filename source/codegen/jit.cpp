@@ -12,11 +12,13 @@
 #include "llvm/Support/raw_os_ostream.h"
 #include "spdlog/spdlog.h"
 
-using JIT = moderndbs::JIT;
+using JIT = ZRegex::JIT;
 
 namespace {
 
   void optimizeModule(llvm::Module& module) {
+    // skip optimization for cpp
+    if (module.getName() != "rgx_module") return;
     // Create a function pass manager
     auto passManager = std::make_unique<llvm::legacy::FunctionPassManager>(&module);
 
@@ -37,10 +39,10 @@ namespace {
     for (auto& fn : module) {
       passManager->run(fn);
     }
-    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
-      spdlog::info("################ AFTER OPTIMIZATION PASS ################");
-      module.print(llvm::errs(), nullptr);
-    }
+    //    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
+    spdlog::info("################ AFTER OPTIMIZATION PASS ################");
+    module.print(llvm::errs(), nullptr);
+    //    }
   }
 
 }  // namespace
@@ -54,12 +56,12 @@ JIT::JIT(llvm::orc::ThreadSafeContext& ctx)
                    []() { return std::make_unique<llvm::SectionMemoryManager>(); }),
       compile_layer(execution_session, object_layer,
                     std::make_unique<llvm::orc::SimpleCompiler>(*target_machine)),
-      optimize_layer(execution_session, compile_layer,
-                     [this](llvm::orc::ThreadSafeModule m,
-                                   const llvm::orc::MaterializationResponsibility&) {
-                       optimizeModule(*m.getModuleUnlocked());
-                       return m;
-                     }),
+      optimize_layer(
+          execution_session, compile_layer,
+          [this](llvm::orc::ThreadSafeModule m, const llvm::orc::MaterializationResponsibility&) {
+            optimizeModule(*m.getModuleUnlocked());
+            return m;
+          }),
       mainDylib(cantFail(execution_session.createJITDylib("<main>"), "createJITDylib failed")) {
   // Lookup symbols in host process
   auto generator = llvm::cantFail(llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(
@@ -72,6 +74,10 @@ llvm::Error JIT::addModule(std::unique_ptr<llvm::Module> module) {
 }
 
 void* JIT::getPointerToFunction(const std::string& name) {
-  auto sym = execution_session.lookup(&mainDylib, name);
-  return sym ? reinterpret_cast<void*>(static_cast<uintptr_t>(sym->getAddress())) : nullptr;
+  auto error_or_symbol = execution_session.lookup(&mainDylib, name);
+  if (!error_or_symbol) {
+    spdlog::error(llvm::toString(error_or_symbol.takeError()));
+    return nullptr;
+  }
+  return reinterpret_cast<void*>(static_cast<uintptr_t>(error_or_symbol->getAddress()));
 }

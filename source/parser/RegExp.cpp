@@ -1,5 +1,6 @@
-#include <fmt/core.h>
 #include <parser/RegExp.h>
+
+#include "spdlog/fmt/fmt.h"
 
 IBaseNode* RegExp::parse_union_expr() {
   IBaseNode* e = parse_concat_expr();

@@ -33,12 +33,12 @@ CPMAddPackage(
         GITHUB_REPOSITORY google/re2
 )
 
-CPMAddPackage(
-        NAME fmt
-        GIT_TAG 7.1.3
-        GITHUB_REPOSITORY fmtlib/fmt
-        OPTIONS "FMT_INSTALL YES" # create an installable target
-)
+#CPMAddPackage(
+#        NAME fmt
+#        GIT_TAG 7.1.3
+#        GITHUB_REPOSITORY fmtlib/fmt
+#        OPTIONS "FMT_INSTALL YES" # create an installable target
+#)
 
 # logging
 CPMAddPackage(
@@ -92,7 +92,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 # Link dependencies
-target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+#target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
 target_link_libraries(${PROJECT_NAME} PUBLIC re2)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)
 target_link_libraries(${PROJECT_NAME} PUBLIC benchmark)
