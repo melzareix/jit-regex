@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 class IVisitor {
 public:
   virtual void visit(class CharRangeNode *v) = 0;
@@ -21,10 +22,10 @@ public:
   static ResultType GetValue(VisitablePtr *n) {
     VisitorImpl vis;
     n->accept(&vis);  // this call fills the return value
-    return vis.value;
+    return std::move(vis.value);
   }
 
-  void Return(ResultType value_) { value = value_; }
+  void Return(ResultType value_) { value = std::move(value_); }
 
 private:
   ResultType value;

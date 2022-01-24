@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <list>
-#include <nlohmann/json.hpp>
 #include <vector>
 
 void Automaton::add_state(const State& state) { states.insert({state.id(), state}); }
@@ -117,38 +116,6 @@ void Automaton::to_dfa() {
   //  }
 }
 std::unique_ptr<Automaton> Automaton::from_json(std::ifstream& ifs) {
-  nlohmann::json j = nlohmann::json::parse(ifs);
-  auto states = j["states"];
-  auto accept = j["acceptStates"];
-  auto is = j["initialState"];
-
   auto automaton = std::make_unique<Automaton>();
-
-  // is
-  automaton->initial() = is["id"];
-
-  // accept states
-  std::unordered_set<nlohmann::json> acceptset;
-  for (auto as : accept) {
-    auto i = as["id"];
-    acceptset.insert(i);
-  }
-
-  // states
-  for (auto as : states) {
-    State s(as["id"]);
-    if (acceptset.count((as["id"])) > 0) {
-      s.is_accept() = true;
-    }
-
-    for (auto t : as["transitions"]) {
-      auto mn = t["min"];
-      auto max = t["max"];
-      auto to = t["to"];
-      s.add_transition(Transition(mn, max, to));
-    }
-    automaton->add_state(s);
-  }
-
   return automaton;
 }

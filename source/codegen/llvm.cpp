@@ -8,7 +8,7 @@
 #include <llvm/Support/TargetSelect.h>
 
 namespace ZRegex {
-  void LLVMCodeGen::Generate(Automaton* dfa) {
+  void LLVMCodeGen::Generate(std::unique_ptr<FiniteAutomaton> dfa) {
     auto ctx = context.getContext();
 
     // i1 @traverse_(i8* %str, i32 %str_length)
@@ -29,22 +29,23 @@ namespace ZRegex {
     auto idx_var = builder->CreateAlloca(llvm::Type::getInt64Ty(*ctx), nullptr, "idx");
     builder->CreateStore(builder->getInt64(0), idx_var);
 
-    auto initial_state = dfa->states[dfa->initial()];
+    auto initial_state = dfa->initial_state;
+    auto states = dfa->GetStates();
 
-    GenerateState(initial_state, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
+    GenerateState(*initial_state, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
                   &*(traverse_fn->arg_begin() + 1), true);
     //
-    for (auto& s : dfa->states) {
-      if (s.first == initial_state.id()) continue;
-      GenerateState(s.second, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
+    for (auto& s : states) {
+      if (s->id == initial_state->id) continue;
+      GenerateState(*s, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
                     &*(traverse_fn->arg_begin() + 1), false);
     }
   }
 
-  void LLVMCodeGen::GenerateState(State& s, llvm::Function* parent, llvm::Value* idx,
+  void LLVMCodeGen::GenerateState(FiniteAutomatonState& s, llvm::Function* parent, llvm::Value* idx,
                                   llvm::Value* str, llvm::Value* n, bool initial) {
     auto ctx = context.getContext();
-    llvm::BasicBlock* stateBlockEntry = GetOrCreateBlock(s.id(), parent);
+    llvm::BasicBlock* stateBlockEntry = GetOrCreateBlock(s.id, parent);
 
     if (initial) {
       builder->CreateBr(stateBlockEntry);
@@ -52,7 +53,7 @@ namespace ZRegex {
     builder->SetInsertPoint(stateBlockEntry);
 
     // easy case accept just return
-    if (s.is_accept()) {
+    if (s.accept) {
       builder->SetInsertPoint(stateBlockEntry);
       builder->CreateRet(builder->getInt1(true));
       return;
@@ -85,24 +86,25 @@ namespace ZRegex {
     auto inc = builder->CreateAdd(load_idx, builder->getInt64(1));
     builder->CreateStore(inc, idx);
 
-    spdlog::debug("State{}: Transitions Size: {}", s.id(), s.transitions().size());
+    spdlog::debug("State{}: Transitions Size: {}", s.id, s.transitions.size());
     llvm::BasicBlock* last_block = nullptr;
-    for (auto t : s.transitions()) {
-      last_block = GenerateTransition(s.id(), t, c, parent, last_block);
+    for (const auto& t : s.transitions) {
+      last_block = GenerateTransition(s.id, t, c, parent, last_block);
     }
     if (last_block != nullptr) {
       builder->SetInsertPoint(last_block);
       builder->CreateRet(builder->getInt1(false));
     }
   }
-  llvm::BasicBlock* LLVMCodeGen::GenerateTransition(uint32_t from, Transition& t, llvm::Value* c,
-                                                    llvm::Function* parent, llvm::BasicBlock* blk) {
-    auto l = t.min(), h = t.max();
-    auto to = t.dest();
-    spdlog::debug("Transition [{}, {}] -> State{}", l, h, to);
+  llvm::BasicBlock* LLVMCodeGen::GenerateTransition(uint32_t from, const FiniteAutomatonTransition& t,
+                                                    llvm::Value* c, llvm::Function* parent,
+                                                    llvm::BasicBlock* blk) {
+    auto l = t.min, h = t.max;
+    auto to = t.to;
+    spdlog::debug("Transition [{}, {}] -> State{}", l, h, to->id);
     auto next_state = llvm::BasicBlock::Create(*context.getContext(),
                                                "s" + std::to_string(from) + "_nt", parent);
-    auto true_state = GetOrCreateBlock(to, parent);
+    auto true_state = GetOrCreateBlock(to->id, parent);
 
     if (blk != nullptr) {
       builder->SetInsertPoint(blk);

@@ -4,9 +4,10 @@
 
 class OptionalNode : public IBaseNode {
 private:
-  IBaseNode* exp;
+  IBaseNode* exp_;
 
 public:
-  OptionalNode(IBaseNode* exp) : exp(exp) {}
+  explicit OptionalNode(IBaseNode* exp) : exp_(exp) {}
+  IBaseNode* exp() {return exp_;}
   void accept(class IVisitor* v) override { v->visit(this); }
 };

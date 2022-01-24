@@ -39,10 +39,10 @@ namespace {
     for (auto& fn : module) {
       passManager->run(fn);
     }
-    //    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
-    spdlog::info("################ AFTER OPTIMIZATION PASS ################");
-    module.print(llvm::errs(), nullptr);
-    //    }
+    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
+      spdlog::info("################ AFTER OPTIMIZATION PASS ################");
+      module.print(llvm::errs(), nullptr);
+    }
   }
 
 }  // namespace

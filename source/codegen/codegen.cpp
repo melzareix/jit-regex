@@ -29,16 +29,13 @@ namespace ZRegex {
     }
   }
   bool Codegen::Run(const char *inp) {
-    if (traverse_ptr == nullptr) {
-      JIT();
-    }
     return traverse_ptr(const_cast<char *>(inp), strlen(inp));
   }
   jit_func_t Codegen::GetFnPtr() { return traverse_ptr; }
-  void Codegen::GenerateAndCompileCpp(Automaton *dfa, const char *filename) {
+  void Codegen::GenerateAndCompileCpp(std::unique_ptr<FiniteAutomaton> dfa, const char *filename) {
     // (1) Generate the cpp
     this->filename = filename;
-    CppCodeGen::Generate(dfa, filename);
+    CppCodeGen::Generate(std::move(dfa), filename);
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error prone but works for our case here as prototype
     auto cmd = fmt::format("cd /tmp && clang -std=c++14 -O3 -emit-llvm {}.cpp -o {}.ll -S",
@@ -48,20 +45,20 @@ namespace ZRegex {
       // handle bad exit code
     }
   }
-  void Codegen::GenerateAndCompileLLVM(Automaton *dfa) {
+  void Codegen::GenerateAndCompileLLVM(std::unique_ptr<FiniteAutomaton> dfa) {
     ZRegex::LLVMCodeGen llvm(context);
-    llvm.Generate(dfa);
+    llvm.Generate(std::move(dfa));
     module = llvm.TakeModule();
   }
-  void Codegen::Compile(const char *file_or_pattern) {
-    // TODO(melzarei) E2E system not loading from JSON
-    std::ifstream ifs(file_or_pattern);
-    auto dfa = Automaton::from_json(ifs);
+  void Codegen::Compile(const char *pattern) {
+    auto dfa = RegExp::GetAutomatonForPattern(pattern);
 
     if (backend_type_ == CPP) {
-      GenerateAndCompileCpp(dfa.get(), "regex");
+      GenerateAndCompileCpp(std::move(dfa), "regex");
     }
-    GenerateAndCompileLLVM(dfa.get());
+    GenerateAndCompileLLVM(std::move(dfa));
+
+    JIT();
   }
 
 }  // namespace ZRegex

@@ -8,17 +8,17 @@
 #include <fstream>
 #include <string>
 #include "spdlog/fmt/fmt.h"
+#include "fa/fa.h"
 
-#include "../automaton/Automaton.h"
 
 namespace ZRegex {
   class CppCodeGen {
   public:
-    static void Generate(Automaton* dfa, const char* filename);
+    static void Generate(std::unique_ptr<FiniteAutomaton> dfa, const char* filename);
 
   private:
-    static void GenerateTraverse(Automaton* dfa, std::ofstream& fs);
-    static void GenerateState(const State& state,std::ofstream& fs, const std::vector<uint32_t> &accept_states);
+    static void GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream& fs);
+    static void GenerateState(const FiniteAutomatonState& state,std::ofstream& fs);
   };
 
 }  // namespace ZRegex

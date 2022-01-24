@@ -9,9 +9,10 @@
 #include <spdlog/spdlog.h>
 
 #include <fstream>
+#include <memory>
 #include <string>
 
-#include "../automaton/Automaton.h"
+#include "fa/fa.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 #include "spdlog/fmt/fmt.h"
 
@@ -24,17 +25,17 @@ namespace ZRegex {
     llvm::orc::ThreadSafeContext context;
 
     llvm::BasicBlock* GetOrCreateBlock(uint32_t k, llvm::Function* parent);
-    llvm::BasicBlock* GenerateTransition(uint32_t from, Transition& t, llvm::Value* c,
+    llvm::BasicBlock* GenerateTransition(uint32_t from, const FiniteAutomatonTransition& t, llvm::Value* c,
                                          llvm::Function* parent, llvm::BasicBlock* blk);
-    void GenerateState(State& s, llvm::Function* parent, llvm::Value* idx, llvm::Value* str,
-                       llvm::Value* n, bool initial = false);
+    void GenerateState(FiniteAutomatonState& s, llvm::Function* parent, llvm::Value* idx,
+                       llvm::Value* str, llvm::Value* n, bool initial = false);
 
   public:
     explicit LLVMCodeGen(llvm::orc::ThreadSafeContext& context) : context(context) {
       builder = std::make_unique<llvm::IRBuilder<>>(*context.getContext());
       module = std::make_unique<llvm::Module>("rgx_module", *context.getContext());
     }
-    void Generate(Automaton* dfa);
+    void Generate(std::unique_ptr<FiniteAutomaton> dfa);
     std::unique_ptr<llvm::Module> TakeModule() { return std::move(module); }
   };
 

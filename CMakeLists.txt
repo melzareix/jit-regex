@@ -27,11 +27,11 @@ include(cmake/CPM.cmake)
 CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.8.0")
 
 # Google Re2 as fallback
-CPMAddPackage(
-        NAME re2
-        GIT_TAG 2021-11-01
-        GITHUB_REPOSITORY google/re2
-)
+#CPMAddPackage(
+#        NAME re2
+#        GIT_TAG 2021-11-01
+#        GITHUB_REPOSITORY google/re2
+#)
 
 #CPMAddPackage(
 #        NAME fmt
@@ -49,16 +49,38 @@ CPMAddPackage(
 )
 
 # json
-CPMAddPackage("gh:nlohmann/json@3.9.1")
+#CPMAddPackage("gh:nlohmann/json@3.9.1")
 
 #micro-benchmark
-CPMAddPackage(
-        NAME benchmark
-        GIT_TAG v1.6.0
-        GITHUB_REPOSITORY google/benchmark
-        OPTIONS "BENCHMARK_ENABLE_TESTING NO"
-)
+#CPMAddPackage(
+#        NAME benchmark
+#        GIT_TAG v1.6.0
+#        GITHUB_REPOSITORY google/benchmark
+#        OPTIONS "BENCHMARK_ENABLE_TESTING NO"
+#)
 
+set(CXX_STANDARD 17)
+#antlr4 parser
+add_definitions(-DANTLR4CPP_STATIC)
+# using /MD flag for antlr4_runtime (for Visual C++ compilers only)
+set(ANTLR4_WITH_STATIC_CRT OFF)
+# add external build for antlrcpp
+include(cmake/antlr/ExternalAntlr4Cpp.cmake)
+message("ANTLR_ROOT ${ANTLR4_ROOT}")
+message("ANTLR4_INCLUDE_DIRS ${ANTLR4_INCLUDE_DIRS}")
+# add antrl4cpp artifacts to project environment
+include_directories(${ANTLR4_INCLUDE_DIRS})
+message("include_dirss ${ANTLR4_OUTPUT_DIR}")
+set(ANTLR_EXECUTABLE /usr/local/Cellar/antlr/4.9.3/antlr-4.9.3-complete.jar)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/antlr/")
+find_package(ANTLR REQUIRED)
+
+# Call macro to add lexer and grammar to your build dependencies.
+message("prr ${PROJECT_BINARY_DIR}")
+set(GRAMMAR_SRC ${PROJECT_SOURCE_DIR}/include/parser/grammar)
+antlr_target(RegexGrammarParser ${PROJECT_SOURCE_DIR}/include/parser/grammar/regex.g4 VISITOR OUTPUT_DIRECTORY ${GRAMMAR_SRC})
+include_directories(${PROJECT_SOURCE_DIR} ${GRAMMAR_SRC})
+message("RegexGrammarParser ${ANTLR_RegexGrammarParser_CXX_OUTPUTS}")
 # llvm
 if (APPLE)
     list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/llvm@12/lib/cmake")
@@ -83,25 +105,29 @@ file(GLOB_RECURSE sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/source/
 
 # Note: for header-only libraries change all PUBLIC flags to INTERFACE and create an interface
 # target: add_library(${PROJECT_NAME} INTERFACE)
-add_library(${PROJECT_NAME} ${headers} ${sources})
-
+add_library(${PROJECT_NAME} ${headers} ${sources} ${ANTLR_RegexGrammarParser_CXX_OUTPUTS})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
-
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 # Link dependencies
 #target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
-target_link_libraries(${PROJECT_NAME} PUBLIC re2)
+#target_link_libraries(${PROJECT_NAME} PUBLIC re2)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)
-target_link_libraries(${PROJECT_NAME} PUBLIC benchmark)
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+#target_link_libraries(${PROJECT_NAME} PUBLIC benchmark)
+#target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LLVM_LIBS})
+target_link_libraries(${PROJECT_NAME} PUBLIC antlr4_static)
 
+message("ANTLR4_STATIC_LIBRARIES ${ANTLR4_STATIC_LIBRARIES}")
 
 target_include_directories(
         ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+)
+target_include_directories(
+        ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${ANTLR4_INCLUDE_DIRS}>
         $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
 )
 target_include_directories(${PROJECT_NAME} PUBLIC ${LLVM_INCLUDE_DIRS})

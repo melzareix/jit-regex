@@ -11,11 +11,9 @@ auto main(int argc, char** argv) -> int {
 
   cxxopts::Options options("ZRegex", "JIT Compiled Regex Engine");
   options.add_options()("r,regex", "Regex", cxxopts::value<std::string>())(
-      "s,string", "String to match the pattern against", cxxopts::value<std::string>())(
       "b,backend", "Backend", cxxopts::value<std::string>());
   auto result = options.parse(argc, argv);
   auto rgx = result["regex"].as<std::string>();
-  auto str = result["string"].as<std::string>();
   auto backend = result["backend"].as<std::string>();
 
   ZRegex::Codegen code_generator(backend == "cpp" ? ZRegex::CodegenBackendType::CPP
@@ -23,7 +21,10 @@ auto main(int argc, char** argv) -> int {
   code_generator.Compile(rgx.c_str());
   spdlog::warn("Pattern Compiled {}", rgx);
 
-  spdlog::info("Run Result : {}", code_generator.Run(str.c_str()));
+  std::string s;
+  while(std::cin >> s) {
+    spdlog::info("Run Result : {}", code_generator.Run(s.c_str()));
+  }
 
   return 0;
 }

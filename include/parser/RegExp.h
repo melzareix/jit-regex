@@ -5,7 +5,9 @@
 #include <stdint.h>
 
 #include <string>
-
+#include "parser/AntlrNodeVisitor.h"
+#include "parser/grammar/regexLexer.h"
+#include "parser/grammar/regexParser.h"
 class RegExp {
 private:
   /**
@@ -49,18 +51,25 @@ private:
   bool match(char c);
   bool has_more();
   char next();
-  bool check(uint32_t flag) const;
+  [[nodiscard]] bool check(uint32_t flag) const;
 
 public:
-  std::string curr_regexp;
-
-  uint32_t min, max;
-  IBaseNode* lhs;
-  IBaseNode* rhs;
 
   explicit RegExp(const std::string& regexp) : RegExp(regexp, ALL) {}
   RegExp() : RegExp("", NONE) {}
   RegExp(const std::string& regexp, u_int32_t flags) : compiler_flags(flags), regexp(regexp) {}
 
+  static std::unique_ptr<ZRegex::FiniteAutomaton> GetAutomatonForPattern(const std::string& pattern) {
+    antlr4::ANTLRInputStream input(pattern);
+    regexLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    regexParser parser(&tokens);
+    auto tree = parser.regex();
+    ZRegex::AntlrNodeVisitor regexVisitor;
+    auto r = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
+    r->Determinize();
+    r->Visualize();
+    return std::move(r);
+  }
   IBaseNode* parse();
 };

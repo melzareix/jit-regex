@@ -4,7 +4,7 @@
 
 #include <automaton/Automaton.h>
 #include <benchmark/benchmark.h>
-#include <codegen/llvmCodegen.h>
+#include <codegen/codegen.h>
 #include <re2/re2.h>
 #include <spdlog/spdlog.h>
 
@@ -13,10 +13,11 @@
 #include <regex>
 
 #include "spdlog/pattern_formatter.h"
-#include "spdlog/sinks/basic_file_sink.h"
-#define DFA_TYPE 0
-#define RE2_TYPE 1
-#define STDLIB_TYPE 2
+
+#define DFA_LLVM_TYPE 0
+#define DFA_CPP_TYPE 1
+#define RE2_TYPE 2
+#define STDLIB_TYPE 3
 
 static void BM_DATASET(benchmark::State& state, const std::string& pattern,
                        const std::string& dataset) {
@@ -24,18 +25,28 @@ static void BM_DATASET(benchmark::State& state, const std::string& pattern,
   std::string line;
   std::function<void()> fn;
 
-  if (state.range(0) == DFA_TYPE) {
-    state.SetLabel("DFA");
-    auto llvm = std::make_shared<LLVMCodeGen>();
+  if (state.range(0) == DFA_LLVM_TYPE) {
+    state.SetLabel("DFA LLVM");
+    auto llvm = std::make_shared<ZRegex::Codegen>(ZRegex::CodegenBackendType::LLVM);
     auto dfa_json = fmt::format("/Users/melzarei/{}.json", pattern);
-    std::ifstream ifs(dfa_json);
-    auto a = Automaton::from_json(ifs);
-    llvm->compile(std::move(a));
-    fn = [&matches, llvm, &line]() { matches += llvm->run(line); };
+    llvm->Compile(dfa_json.c_str());
+    fn = [&matches, llvm, &line]() {
+      benchmark::DoNotOptimize(matches += llvm->Run(line.c_str()));
+    };
+  } else if (state.range(0) == DFA_CPP_TYPE) {
+    state.SetLabel("DFA CPP");
+    auto llvm = std::make_shared<ZRegex::Codegen>(ZRegex::CodegenBackendType::CPP);
+    auto dfa_json = fmt::format("/Users/melzarei/{}.json", pattern);
+    llvm->Compile(dfa_json.c_str());
+    fn = [&matches, llvm, &line]() {
+      benchmark::DoNotOptimize(matches += llvm->Run(line.c_str()));
+    };
   } else if (state.range(0) == RE2_TYPE) {
     state.SetLabel("RE2");
     auto re2pattern = std::make_shared<re2::RE2>(pattern);
-    fn = [&matches, re2pattern, &line]() { matches += re2::RE2::PartialMatch(line, *re2pattern); };
+    fn = [&matches, re2pattern, &line]() {
+      benchmark::DoNotOptimize(matches += re2::RE2::PartialMatch(line, *re2pattern));
+    };
   } else {
     state.SetLabel("STD::REGEX");
     auto stdrgx = std::make_shared<std::regex>(pattern);
@@ -53,14 +64,7 @@ static void BM_DATASET(benchmark::State& state, const std::string& pattern,
   state.counters["Matches"] = matches;
 }
 
-//BENCHMARK_CAPTURE(BM_DATASET, TWAIN_TOM, "[T|t]om.*[R|r]iver", "/Users/melzarei/Desktop/ds.txt")
-//    ->DenseRange(DFA_TYPE, RE2_TYPE);
-//BENCHMARK_CAPTURE(BM_DATASET, TWAIN_HUCK, "Huck[a-zA-Z]+", "/Users/melzarei/Desktop/ds.txt")
-//    ->DenseRange(DFA_TYPE, RE2_TYPE);
-//BENCHMARK_CAPTURE(BM_DATASET, TWAIN_ING, "[a-zA-Z]+ing", "/Users/melzarei/Desktop/ds.txt")
-//    ->DenseRange(DFA_TYPE, RE2_TYPE);
-BENCHMARK_CAPTURE(BM_DATASET, TWAIN_COUNT, "Tom.{1,10}river",
-                  "/Users/melzarei/Desktop/ds.txt")
-    ->DenseRange(DFA_TYPE, RE2_TYPE);
+BENCHMARK_CAPTURE(BM_DATASET, TWAIN_COUNT, "ange", "/Users/melzarei/Desktop/ds.txt")
+    ->DenseRange(DFA_LLVM_TYPE, RE2_TYPE);
 
 BENCHMARK_MAIN();
