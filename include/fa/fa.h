@@ -143,6 +143,17 @@ namespace ZRegex {
         return hash;
       }
     };
+    void Complement() {
+      this->Determinize();
+      this->Totalize();
+      for (const auto& s: this->GetStates()) {
+        s->SetAccept(false);
+      }
+      this->RemoveDeadStates();
+    }
+    void RemoveDeadStates(){}
+    void Totalize() {
+    }
     void Determinize() {
       auto points = GetStartPoints();
       std::list<fa_st> worklist;

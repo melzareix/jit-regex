@@ -15,13 +15,58 @@ namespace ZRegex {
     static std::unique_ptr<FiniteAutomaton> AnyChar() {
       return FAFactory::CharRangeAutomaton(0, 127);
     }
+    static std::unique_ptr<FiniteAutomaton> EpsilonAutomaton() {
+      auto p = std::make_shared<FiniteAutomatonState>();
+      auto fa = std::make_unique<FiniteAutomaton>(p);
+      fa->SetDeterministic(true);
+      return std::move(fa);
+    }
+
+    static std::unique_ptr<FiniteAutomaton> RepeatMinMax(std::unique_ptr<FiniteAutomaton> a,
+                                                        uint32_t min, uint32_t max) {
+      max -= min;
+      std::vector<std::unique_ptr<FiniteAutomaton>> fas;
+      std::unique_ptr<FiniteAutomaton> b;
+
+      if (min == 0) {
+        b = FAFactory::EpsilonAutomaton();
+      }
+      else if (min == 1) {
+        b = std::make_unique<FiniteAutomaton>(*a);
+      }
+      else {
+        while (min-- > 0) {
+          const auto c = *a;
+          std::unique_ptr<FiniteAutomaton> cp(new FiniteAutomaton(c));
+          fas.emplace_back(std::move(cp));
+        }
+        b = FAFactory::ConcatAll(fas);
+      }
+
+      // max
+      if (max > 0) {
+        auto d = std::make_unique<FiniteAutomaton>(*a);
+        while(--max) {
+          auto c = std::make_unique<FiniteAutomaton>(*a);
+          for (const auto& s: c->GetAcceptStates()) {
+            s->AddEpsilon(d->initial_state);
+          }
+          d = std::move(c);
+        }
+        for (const auto& s: b->GetAcceptStates()) {
+          s->AddEpsilon(d->initial_state);
+        }
+        b->SetDeterministic(false);
+      }
+      return std::move(b);
+    }
     // also works for plus operator
     static std::unique_ptr<FiniteAutomaton> RepeatMinimum(std::unique_ptr<FiniteAutomaton> a,
                                                           uint32_t min) {
       if (min == 0) {
         return KleeneStar(std::move(a));
       }
-      min++; //  we need +1 to account for kleene star copy
+      min++;  //  we need +1 to account for kleene star copy
       std::vector<std::unique_ptr<FiniteAutomaton>> fas;
       fas.reserve(min);
 
@@ -120,6 +165,34 @@ namespace ZRegex {
       p->SetAccept();
       fa->SetDeterministic(true);
       return fa;
+    }
+
+    static std::unique_ptr<FiniteAutomaton> Intersect(std::unique_ptr<FiniteAutomaton> a,
+                                                      std::unique_ptr<FiniteAutomaton> b) {
+      //      auto fa = std::make_unique<FiniteAutomaton>();
+//      auto t1 = a->GetT
+    }
+
+    // Named Char classes
+    static std::unique_ptr<FiniteAutomaton> AlphaNumCharClass() {
+      return FAFactory::Union(ZRegex::FAFactory::AlphaCharClass(),
+                              ZRegex::FAFactory::DigitCharClass());
+    }
+    static std::unique_ptr<FiniteAutomaton> AlphaCharClass() {
+      return FAFactory::Union(ZRegex::FAFactory::UpperCharClass(),
+                              ZRegex::FAFactory::LowerCharClass());
+    }
+
+    static std::unique_ptr<FiniteAutomaton> UpperCharClass() {
+      return ZRegex::FAFactory::CharRangeAutomaton(65, 90);
+    }
+
+    static std::unique_ptr<FiniteAutomaton> LowerCharClass() {
+      return ZRegex::FAFactory::CharRangeAutomaton(97, 122);
+    }
+
+    static std::unique_ptr<FiniteAutomaton> DigitCharClass() {
+      return ZRegex::FAFactory::CharRangeAutomaton(48, 57);
     }
   };
 }  // namespace ZRegex

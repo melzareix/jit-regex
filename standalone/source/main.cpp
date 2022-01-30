@@ -1,7 +1,6 @@
 #include <codegen/codegen.h>
 
 #include <string>
-
 #include "cxxopts.hpp"
 #include "spdlog/cfg/env.h"
 #include "spdlog/spdlog.h"

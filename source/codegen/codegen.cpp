@@ -37,7 +37,7 @@ namespace ZRegex {
     this->filename = filename;
     CppCodeGen::Generate(std::move(dfa), filename);
     // (2) Call clang from system to compile the file to LLVM IR
-    // this is very error prone but works for our case here as prototype
+    // this is very error-prone but works for our case here as prototype
     auto cmd = fmt::format("cd /tmp && clang -std=c++14 -O3 -emit-llvm {}.cpp -o {}.ll -S",
                            filename, filename);
     auto exit_code = system(cmd.c_str());
