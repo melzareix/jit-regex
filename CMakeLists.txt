@@ -71,7 +71,6 @@ message("ANTLR4_INCLUDE_DIRS ${ANTLR4_INCLUDE_DIRS}")
 # add antrl4cpp artifacts to project environment
 include_directories(${ANTLR4_INCLUDE_DIRS})
 message("include_dirss ${ANTLR4_OUTPUT_DIR}")
-set(ANTLR_EXECUTABLE /usr/local/Cellar/antlr/4.9.3/antlr-4.9.3-complete.jar)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/antlr/")
 find_package(ANTLR REQUIRED)
 

@@ -26,10 +26,10 @@ jobs:
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
 
       - name: Install Antlr4
-        run: sudo apt-get install -y antlr4
+        run: cd /usr/local/lib/ && curl -O https://www.antlr.org/download/antlr-4.9.3-complete.jar
 
       - name: configure
-        run: cmake -Sstandalone -Bbuild -DCMAKE_BUILD_TYPE=Debug -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -Sstandalone -Bbuild -DANTLR_EXECUTABLE=/usr/local/lib/antlr-4.9.3-complete.jar -DCMAKE_BUILD_TYPE=Debug -DCMAKE_BUILD_TYPE=Debug
 
       - name: build
         run: cmake --build build -j4
