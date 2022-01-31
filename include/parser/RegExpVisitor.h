@@ -2,20 +2,20 @@
 // Created by Mohamed El Zarei on 08/01/2022.
 //
 
-#ifndef ZREGEXSTANDALONE_ANTLRNODEVISITOR_H
-#define ZREGEXSTANDALONE_ANTLRNODEVISITOR_H
+#ifndef ZREGEXSTANDALONE_REGEXPVISITOR_H
+#define ZREGEXSTANDALONE_REGEXPVISITOR_H
 
 #include <memory>
 #include <vector>
 
 #include "fa/fa.h"
 #include "fa/factory.h"
-#include "parser/grammar/regexVisitor.h"
+#include "parser/grammar/RegexVisitor.h"
 #include "spdlog/fmt/fmt.h"
 
 namespace ZRegex {
-  class AntlrNodeVisitor : public regexVisitor {
-    antlrcpp::Any visitAlternation(regexParser::AlternationContext *context) override {
+  class RegExpVisitor : public RegexVisitor {
+    antlrcpp::Any visitAlternation(RegexParser::AlternationContext *context) override {
       // single element return it
       if (context->expression().size() == 1) {
         auto r = std::move(
@@ -32,10 +32,10 @@ namespace ZRegex {
     }
 
   public:
-    antlrcpp::Any visitRegex(regexParser::RegexContext *context) override {
+    antlrcpp::Any visitRegex(RegexParser::RegexContext *context) override {
       return context->alternation()->accept(this);
     }
-    antlrcpp::Any visitExpression(regexParser::ExpressionContext *context) override {
+    antlrcpp::Any visitExpression(RegexParser::ExpressionContext *context) override {
       // single element
       if (context->element().size() == 1) {
         auto z
@@ -52,7 +52,7 @@ namespace ZRegex {
       return ZRegex::FAFactory::ConcatAll(automatons);
     }
 
-    antlrcpp::Any visitElement(regexParser::ElementContext *context) override {
+    antlrcpp::Any visitElement(RegexParser::ElementContext *context) override {
       auto atm = std::move(context->atom()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
       if (!context->quantifier()) {
         return atm;
@@ -83,13 +83,13 @@ namespace ZRegex {
       return atm;
     }
 
-    antlrcpp::Any visitQuantifier(regexParser::QuantifierContext *context) override {
+    antlrcpp::Any visitQuantifier(RegexParser::QuantifierContext *context) override {
       throw std::runtime_error("ERROR:: This method should not be called!");
     }
-    antlrcpp::Any visitNumber(regexParser::NumberContext *context) override {
+    antlrcpp::Any visitNumber(RegexParser::NumberContext *context) override {
       throw std::runtime_error("ERROR:: This method should not be called!");
     }
-    antlrcpp::Any visitAtom(regexParser::AtomContext *context) override {
+    antlrcpp::Any visitAtom(RegexParser::AtomContext *context) override {
       if (context->Wildcard()) {
         auto c = ZRegex::FAFactory::AnyChar();
         return ZRegex::FAFactory::KleeneStar(std::move(c));
@@ -109,7 +109,7 @@ namespace ZRegex {
       return std::move(v);
     }
 
-    antlrcpp::Any visitCharacter(regexParser::CharacterContext *context) override {
+    antlrcpp::Any visitCharacter(RegexParser::CharacterContext *context) override {
       std::unique_ptr<FiniteAutomaton> v;
       if (context->specialChar()) {
         v = std::move(context->specialChar()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
@@ -120,18 +120,18 @@ namespace ZRegex {
       return std::move(v);
     };
 
-    antlrcpp::Any visitRegularCharacter(regexParser::RegularCharacterContext *context) override {
+    antlrcpp::Any visitRegularCharacter(RegexParser::RegularCharacterContext *context) override {
       return ZRegex::FAFactory::StringAutomaton(context->value->getText());
     }
 
-    antlrcpp::Any visitSpecialChar(regexParser::SpecialCharContext *context) override {
+    antlrcpp::Any visitSpecialChar(RegexParser::SpecialCharContext *context) override {
       return ZRegex::FAFactory::StringAutomaton(context->value->getText());
     }
 
-    antlrcpp::Any visitAnyChar(regexParser::AnyCharContext *context) override {
+    antlrcpp::Any visitAnyChar(RegexParser::AnyCharContext *context) override {
       return ZRegex::FAFactory::AnyChar();
     }
-    antlrcpp::Any visitCcPositive(regexParser::CcPositiveContext *context) override {
+    antlrcpp::Any visitCcPositive(RegexParser::CcPositiveContext *context) override {
       std::vector<std::unique_ptr<FiniteAutomaton>> automatons;
       for (const auto &expr : context->classMember()) {
         auto expr_nfa = std::move(expr->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
@@ -140,11 +140,11 @@ namespace ZRegex {
 
       return FAFactory::UnionAll(automatons);
     }
-    antlrcpp::Any visitCcNegative(regexParser::CcNegativeContext *context) override {
+    antlrcpp::Any visitCcNegative(RegexParser::CcNegativeContext *context) override {
       // negation is equivalent to (.&~(cc))
     }
 
-    antlrcpp::Any visitClassMember(regexParser::ClassMemberContext *context) override {
+    antlrcpp::Any visitClassMember(RegexParser::ClassMemberContext *context) override {
       if (context->range()) {
         return std::move(context->range()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
       }
@@ -156,7 +156,7 @@ namespace ZRegex {
       // default case it is a character
       return std::move(context->character()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
     }
-    antlrcpp::Any visitRange(regexParser::RangeContext *context) override {
+    antlrcpp::Any visitRange(RegexParser::RangeContext *context) override {
       auto min = std::move(context->min->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
       auto max = std::move(context->max->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
 
@@ -164,12 +164,12 @@ namespace ZRegex {
       auto max_char = *max->initial_state->transitions.begin();
       return ZRegex::FAFactory::CharRangeAutomaton(min_char.min, max_char.min);
     }
-    antlrcpp::Any visitPredefinedClass(regexParser::PredefinedClassContext *context) override {
+    antlrcpp::Any visitPredefinedClass(RegexParser::PredefinedClassContext *context) override {
       return std::move(
           context->predefinedClassName()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
     }
     antlrcpp::Any visitPredefinedClassName(
-        regexParser::PredefinedClassNameContext *context) override {
+        RegexParser::PredefinedClassNameContext *context) override {
       auto token = context->value->getText();
       if (token == "ALPHA") {
         return FAFactory::AlphaCharClass();
@@ -189,6 +189,6 @@ namespace ZRegex {
       throw std::runtime_error("INVALID Predefined Class!");
     }
   };
-};  // namespace ZRegex
+}  // namespace ZRegex
 
-#endif  // ZREGEXSTANDALONE_ANTLRNODEVISITOR_H
+#endif  // ZREGEXSTANDALONE_REGEXPVISITOR_H

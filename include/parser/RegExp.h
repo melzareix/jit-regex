@@ -1,25 +1,26 @@
 #pragma once
 
-#include <parser/RegExpHelpers.h>
-#include <parser/nodes/IBaseNode.h>
-#include <stdint.h>
 
+#include <cstdint>
 #include <string>
-#include "parser/AntlrNodeVisitor.h"
-#include "parser/grammar/regexLexer.h"
-#include "parser/grammar/regexParser.h"
+
+#include "parser/RegExpVisitor.h"
+#include "parser/grammar/RegexLexer.h"
+#include "parser/grammar/RegexParser.h"
+
 class RegExp {
 public:
-  static std::unique_ptr<ZRegex::FiniteAutomaton> GetAutomatonForPattern(const std::string& pattern) {
+  static std::unique_ptr<ZRegex::FiniteAutomaton> GetAutomatonForPattern(
+      const std::string& pattern) {
     antlr4::ANTLRInputStream input(pattern);
-    regexLexer lexer(&input);
+    RegexLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
-    regexParser parser(&tokens);
+    RegexParser parser(&tokens);
     auto tree = parser.regex();
-    ZRegex::AntlrNodeVisitor regexVisitor;
-    auto r = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
-    r->Determinize();
-    r->Visualize();
-    return std::move(r);
+    ZRegex::RegExpVisitor regexVisitor;
+    auto fa = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
+    fa->Determinize();
+    fa->Visualize();
+    return std::move(fa);
   }
 };

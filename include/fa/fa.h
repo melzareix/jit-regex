@@ -15,8 +15,6 @@
 #include <unordered_set>
 
 #include "fa/state.h"
-#include "parser/grammar/regexLexer.h"
-#include "parser/grammar/regexParser.h"
 
 namespace ZRegex {
   class FiniteAutomaton {

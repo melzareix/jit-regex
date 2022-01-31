@@ -77,7 +77,7 @@ find_package(ANTLR REQUIRED)
 # Call macro to add lexer and grammar to your build dependencies.
 message("prr ${PROJECT_BINARY_DIR}")
 set(GRAMMAR_SRC ${PROJECT_SOURCE_DIR}/include/parser/grammar)
-antlr_target(RegexGrammarParser ${PROJECT_SOURCE_DIR}/include/parser/grammar/regex.g4 VISITOR OUTPUT_DIRECTORY ${GRAMMAR_SRC})
+antlr_target(RegexGrammarParser ${PROJECT_SOURCE_DIR}/include/parser/grammar/Regex.g4 VISITOR OUTPUT_DIRECTORY ${GRAMMAR_SRC})
 include_directories(${PROJECT_SOURCE_DIR} ${GRAMMAR_SRC})
 message("RegexGrammarParser ${ANTLR_RegexGrammarParser_CXX_OUTPUTS}")
 # llvm
