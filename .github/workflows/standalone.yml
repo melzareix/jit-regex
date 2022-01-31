@@ -25,6 +25,9 @@ jobs:
           path: "**/cpm_modules"
           key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
 
+      - name: Install Antlr4
+        run: sudo apt-get install -y antlr4
+
       - name: configure
         run: cmake -Sstandalone -Bbuild -DCMAKE_BUILD_TYPE=Debug -DCMAKE_BUILD_TYPE=Debug
 
