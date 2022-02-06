@@ -10,7 +10,6 @@
 #include <memory>
 #include <string>
 
-#include "../automaton/Automaton.h"
 #include "../parser/RegExp.h"
 #include "jit.h"
 #include "llvm/ExecutionEngine/Orc/Mangling.h"

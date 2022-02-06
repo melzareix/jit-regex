@@ -14,20 +14,19 @@ namespace ZRegex {
   class FiniteAutomatonTransition {
   private:
   public:
-    uint16_t min, max;
+    uint32_t min, max;
     std::shared_ptr<FiniteAutomatonState> to;
 
-    FiniteAutomatonTransition(uint16_t min, uint16_t max, std::shared_ptr<FiniteAutomatonState> to)
+    FiniteAutomatonTransition(uint32_t min, uint32_t max, std::shared_ptr<FiniteAutomatonState> to)
         : min(min), max(max), to(to){};
-    FiniteAutomatonTransition(uint16_t c, std::shared_ptr<FiniteAutomatonState> to)
-        : FiniteAutomatonTransition(c, c, std::move(to)){};
+    FiniteAutomatonTransition(uint32_t c, std::shared_ptr<FiniteAutomatonState> to)
+        : FiniteAutomatonTransition(c, c, to){};
 
-    friend inline bool operator==(const FiniteAutomatonTransition& t1, const FiniteAutomatonTransition& t2);
+    friend inline bool operator==(const FiniteAutomatonTransition& t1,
+                                  const FiniteAutomatonTransition& t2);
 
     struct HashFunction {
-      size_t operator()(const FiniteAutomatonTransition& t) const {
-        return t.min * 2 + t.max * 3;
-      }
+      size_t operator()(const FiniteAutomatonTransition& t) const { return t.min * 2 + t.max * 3; }
     };
   };
 

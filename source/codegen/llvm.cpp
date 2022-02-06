@@ -112,12 +112,12 @@ namespace ZRegex {
     // single condition
     // if (c == %1) br %s1;
     if (l == h) {
-      auto eq = builder->CreateICmpEQ(c, builder->getInt8(l));
+      auto eq = builder->CreateICmpEQ(c, builder->getInt32(l));
       builder->CreateCondBr(eq, true_state, next_state);
     } else {
       // if (c >= l && c <= h)
-      auto cgel = builder->CreateICmpUGE(c, builder->getInt8(l));
-      auto cleh = builder->CreateICmpULE(c, builder->getInt8(h));
+      auto cgel = builder->CreateICmpUGE(c, builder->getInt32(l));
+      auto cleh = builder->CreateICmpULE(c, builder->getInt32(h));
       auto cnd = builder->CreateAnd(cgel, cleh);
       builder->CreateCondBr(cnd, true_state, next_state);
     }

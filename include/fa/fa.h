@@ -5,6 +5,8 @@
 #ifndef ZREGEXSTANDALONE_NFA_H
 #define ZREGEXSTANDALONE_NFA_H
 
+#include <helpers/utf8.h>
+
 #include <cstdint>
 #include <initializer_list>
 #include <iostream>
@@ -15,6 +17,7 @@
 #include <unordered_set>
 
 #include "fa/state.h"
+#include "helpers/utf8.h"
 
 namespace ZRegex {
   class FiniteAutomaton {
@@ -108,23 +111,22 @@ namespace ZRegex {
       return accepts;
     }
 
-    std::vector<uint16_t> GetStartPoints() {
-      std::unordered_set<uint16_t> point_set;
-      std::vector<uint16_t> points;
+    [[nodiscard]] std::vector<uint32_t> GetStartPoints() const {
+      std::unordered_set<uint32_t> point_set;
+      std::vector<uint32_t> points;
       point_set.insert(0);
       auto states = GetStates();
       for (const auto& s : states) {
         for (const auto& t : s->transitions) {
           point_set.insert(t.min);
-          if (t.max < 127) {
+          if (t.max < Utf8::MAX_TRANS) {
             point_set.insert(t.max + 1);
           }
         }
       }
 
       points.reserve(point_set.size());
-      uint32_t i = 0;
-      for (unsigned short it : point_set) {
+      for (const auto& it : point_set) {
         points.push_back(it);
       }
       std::sort(points.begin(), points.end());
@@ -144,14 +146,13 @@ namespace ZRegex {
     void Complement() {
       this->Determinize();
       this->Totalize();
-      for (const auto& s: this->GetStates()) {
+      for (const auto& s : this->GetStates()) {
         s->SetAccept(false);
       }
       this->RemoveDeadStates();
     }
-    void RemoveDeadStates(){}
-    void Totalize() {
-    }
+    void RemoveDeadStates() {}
+    void Totalize() {}
     void Determinize() {
       auto points = GetStartPoints();
       std::list<fa_st> worklist;
@@ -200,13 +201,13 @@ namespace ZRegex {
               q = new_state[p];
             }
 
-            uint16_t min = points[i];
-            uint16_t max;
+            uint32_t min = points[i];
+            uint32_t max;
 
             if (i + 1 < points.size()) {
               max = points[i + 1] - 1;
             } else {
-              max = 127;
+              max = Utf8::MAX_TRANS;
             }
 
             r->AddTransition(min, max, q);

@@ -10,10 +10,12 @@
 #include <vector>
 
 #include "fa/fa.h"
+#include "helpers/utf8.h"
+
 namespace ZRegex {
   struct FAFactory {
     static std::unique_ptr<FiniteAutomaton> AnyChar() {
-      return FAFactory::CharRangeAutomaton(0, 127);
+      return FAFactory::CharRangeAutomaton(0, ZRegex::Utf8::MAX_TRANS);
     }
     static std::unique_ptr<FiniteAutomaton> EpsilonAutomaton() {
       auto p = std::make_shared<FiniteAutomatonState>();
@@ -23,18 +25,16 @@ namespace ZRegex {
     }
 
     static std::unique_ptr<FiniteAutomaton> RepeatMinMax(std::unique_ptr<FiniteAutomaton> a,
-                                                        uint32_t min, uint32_t max) {
+                                                         uint32_t min, uint32_t max) {
       max -= min;
       std::vector<std::unique_ptr<FiniteAutomaton>> fas;
       std::unique_ptr<FiniteAutomaton> b;
 
       if (min == 0) {
         b = FAFactory::EpsilonAutomaton();
-      }
-      else if (min == 1) {
+      } else if (min == 1) {
         b = std::make_unique<FiniteAutomaton>(*a);
-      }
-      else {
+      } else {
         while (min-- > 0) {
           const auto c = *a;
           std::unique_ptr<FiniteAutomaton> cp(new FiniteAutomaton(c));
@@ -46,14 +46,14 @@ namespace ZRegex {
       // max
       if (max > 0) {
         auto d = std::make_unique<FiniteAutomaton>(*a);
-        while(--max) {
+        while (--max) {
           auto c = std::make_unique<FiniteAutomaton>(*a);
-          for (const auto& s: c->GetAcceptStates()) {
+          for (const auto& s : c->GetAcceptStates()) {
             s->AddEpsilon(d->initial_state);
           }
           d = std::move(c);
         }
-        for (const auto& s: b->GetAcceptStates()) {
+        for (const auto& s : b->GetAcceptStates()) {
           s->AddEpsilon(d->initial_state);
         }
         b->SetDeterministic(false);
@@ -143,7 +143,7 @@ namespace ZRegex {
       a->SetDeterministic(a->deterministic && b->deterministic);
       return a;
     }
-    static std::unique_ptr<FiniteAutomaton> CharRangeAutomaton(char min, char max) {
+    static std::unique_ptr<FiniteAutomaton> CharRangeAutomaton(uint32_t min, uint32_t max) {
       auto p = std::make_shared<FiniteAutomatonState>();
       auto q = std::make_shared<FiniteAutomatonState>();
       auto fa = std::make_unique<FiniteAutomaton>(p);
@@ -155,14 +155,18 @@ namespace ZRegex {
       return fa;
     }
     static std::unique_ptr<FiniteAutomaton> StringAutomaton(const std::string& str) {
+      // maybe rename it works with only chars utf8 included now
+      auto b1 = str[0];
+      auto len = ZRegex::Utf8::multiByteSequenceLength(b1);
+      auto c = ZRegex::Utf8::ReadMultiByteCase(str, b1, len);
       auto p = std::make_shared<FiniteAutomatonState>();
       auto fa = std::make_unique<FiniteAutomaton>(p);
-      for (auto c : str) {
-        auto q = std::make_shared<FiniteAutomatonState>();
-        p->AddTransition(c, c, q);
-        p = q;
-      }
-      p->SetAccept();
+
+      auto q = std::make_shared<FiniteAutomatonState>();
+      p->AddTransition(c, c, q);
+//      p = q;
+
+      q->SetAccept();
       fa->SetDeterministic(true);
       return fa;
     }
@@ -170,7 +174,7 @@ namespace ZRegex {
     static std::unique_ptr<FiniteAutomaton> Intersect(std::unique_ptr<FiniteAutomaton> a,
                                                       std::unique_ptr<FiniteAutomaton> b) {
       //      auto fa = std::make_unique<FiniteAutomaton>();
-//      auto t1 = a->GetT
+      //      auto t1 = a->GetT
     }
 
     // Named Char classes

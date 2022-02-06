@@ -26,7 +26,7 @@ namespace ZRegex {
     FiniteAutomatonState() : accept(false), id(id_counter++){};
     ~FiniteAutomatonState() { spdlog::debug("FiniteAutomatonState {} Destructed!", id); }
 
-    void AddTransition(const uint16_t& min, const uint16_t& max,
+    void AddTransition(const uint32_t& min, const uint32_t& max,
                        const std::shared_ptr<FiniteAutomatonState>& to) {
       transitions.emplace(min, max, to);
     }

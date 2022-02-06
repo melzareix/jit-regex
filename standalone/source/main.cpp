@@ -1,12 +1,14 @@
 #include <codegen/codegen.h>
 
 #include <string>
+
 #include "cxxopts.hpp"
-#include "spdlog/cfg/env.h"
+#include "helpers/utf8.h"
+#include "spdlog/cfg/argv.h"
 #include "spdlog/spdlog.h"
 
 auto main(int argc, char** argv) -> int {
-  spdlog::cfg::load_env_levels();
+  spdlog::cfg::load_argv_levels(argc, argv);
 
   cxxopts::Options options("ZRegex", "JIT Compiled Regex Engine");
   options.add_options()("r,regex", "Regex", cxxopts::value<std::string>())(
@@ -21,8 +23,9 @@ auto main(int argc, char** argv) -> int {
   spdlog::warn("Pattern Compiled {}", rgx);
 
   std::string s;
-  while(std::cin >> s) {
-    spdlog::info("Run Result : {}", code_generator.Run(s.c_str()));
+  while (std::cin >> s) {
+    auto z = s.c_str();
+    spdlog::info("Run Result : {}", code_generator.Run(z));
   }
 
   return 0;

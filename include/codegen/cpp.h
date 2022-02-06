@@ -17,6 +17,8 @@ namespace ZRegex {
     static void Generate(std::unique_ptr<FiniteAutomaton> dfa, const char* filename);
 
   private:
+    static void GenerateUtf8(std::ofstream& fs);
+    static void GenerateDebuggingMain(std::ofstream& fs);
     static void GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream& fs);
     static void GenerateState(const FiniteAutomatonState& state,std::ofstream& fs);
   };

@@ -15,14 +15,19 @@ namespace ZRegex {
     if (backend_type_ == CPP) {
       module = llvm::parseIRFile(fmt::format("/tmp/{}.ll", filename), Err, *context.getContext());
       for (auto& m : module->getFunctionList()) {
-        fnName = m.getName().str();
+        auto fn = m.getName().str();
+        if (fn.find("traverse") != std::string::npos) {
+          fnName = fn;
+          break;
+        }
       }
     }
     auto err = jit->addModule(std::move(module));
 
     if (backend_type_ == CPP) {
       traverse_ptr = reinterpret_cast<bool (*)(char *, uint64_t n)>(
-          jit->getPointerToFunction("_" + fnName));
+          jit->
+          getPointerToFunction("_" + fnName));
     } else {
       traverse_ptr
           = reinterpret_cast<bool (*)(char *, uint64_t n)>(jit->getPointerToFunction("traverse"));
@@ -55,9 +60,9 @@ namespace ZRegex {
 
     if (backend_type_ == CPP) {
       GenerateAndCompileCpp(std::move(dfa), "regex");
+    } else {
+      GenerateAndCompileLLVM(std::move(dfa));
     }
-    GenerateAndCompileLLVM(std::move(dfa));
-
     JIT();
   }
 
