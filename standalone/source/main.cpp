@@ -23,7 +23,7 @@ auto main(int argc, char** argv) -> int {
   spdlog::warn("Pattern Compiled {}", rgx);
 
   std::string s;
-  while (std::cin >> s) {
+  while (getline(std::cin, s)) {
     auto z = s.c_str();
     spdlog::info("Run Result : {}", code_generator.Run(z));
   }

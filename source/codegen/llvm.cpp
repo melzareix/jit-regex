@@ -7,7 +7,172 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/Support/TargetSelect.h>
 
+using namespace llvm;
 namespace ZRegex {
+
+  void LLVMCodeGen::GenerateMultiByteSequenceLength() {
+    // multiByteSequenceLength fn
+    auto ctx = context.getContext();
+    auto ret_ty = llvm::Type::getInt8Ty(*ctx);
+    auto first_byte_ty = llvm::Type::getInt8Ty(*ctx);
+    auto* clz_fn_ty = llvm::FunctionType::get(ret_ty, {first_byte_ty}, false);
+    auto multibyte_seq_len_fn = llvm::cast<llvm::Function>(
+        module->getOrInsertFunction("multiByteSequenceLength", clz_fn_ty).getCallee());
+    functionNamesToFns["multiByteSequenceLength"] = multibyte_seq_len_fn;
+    llvm::BasicBlock* fnEntry = llvm::BasicBlock::Create(*ctx, "entry", multibyte_seq_len_fn);
+    builder->SetInsertPoint(fnEntry);
+    auto neg = builder->CreateXor(&*multibyte_seq_len_fn->arg_begin(), builder->getInt8(-1));
+    auto len = builder->CreateBinaryIntrinsic(llvm::Intrinsic::ctlz, neg, builder->getInt1(false));
+
+    auto cond = builder->CreateICmpUGT(len, builder->getInt8(0));
+    auto byteLen = builder->CreateSelect(cond, len, builder->getInt8(1));
+    builder->CreateRet(byteLen);
+  }
+  void LLVMCodeGen::GenerateNextByte() {
+    auto ctx = context.getContext();
+    auto ret_ty = llvm::Type::getInt32Ty(*ctx);
+    auto str_ptr_ty = llvm::Type::getInt8PtrTy(*ctx);
+    auto idx_ty = llvm::Type::getInt32PtrTy(*ctx);
+    auto* clz_fn_ty = llvm::FunctionType::get(ret_ty, {str_ptr_ty, idx_ty}, false);
+    auto read_mb_fn = llvm::cast<llvm::Function>(
+        module->getOrInsertFunction("nextByte", clz_fn_ty).getCallee());
+
+    llvm::BasicBlock* fnEntry = llvm::BasicBlock::Create(*ctx, "entry", read_mb_fn);
+    builder->SetInsertPoint(fnEntry);
+
+    auto str = &*(read_mb_fn->arg_begin());
+    auto idx = &*(read_mb_fn->arg_begin() + 1);
+    auto load_idx = builder->CreateLoad(builder->getInt32Ty(), idx);
+
+    // str[idx]
+    auto c_mem = builder->CreateGEP(str, load_idx);
+    auto firstByte = builder->CreateLoad(builder->getInt8Ty(), c_mem);
+    // byteLen
+    auto byteLen = builder->CreateCall(functionNamesToFns["multiByteSequenceLength"], {firstByte});
+    auto tzext = builder->CreateZExt(byteLen, builder->getInt32Ty());
+//    builder->CreateRet(tzext);
+    // c = readMultiByte(str, fb, idx, byteLen);
+    auto c = builder->CreateCall(functionNamesToFns["readMultiByte"], {str, firstByte, load_idx, byteLen});
+    auto idxInc = builder->CreateAdd(load_idx, tzext);
+    builder->CreateStore(idxInc, idx);
+    builder->CreateRet(c);
+  }
+
+  void LLVMCodeGen::GenerateReadMultiByte() {
+    auto ctx = context.getContext();
+    auto ret_ty = llvm::Type::getInt32Ty(*ctx);
+    auto first_byte_ty = llvm::Type::getInt8Ty(*ctx);
+    auto str_ptr_ty = llvm::Type::getInt8PtrTy(*ctx);
+    auto idx_ty = llvm::Type::getInt32Ty(*ctx);
+    auto bytelen_ty = llvm::Type::getInt8Ty(*ctx);
+    auto* clz_fn_ty = llvm::FunctionType::get(ret_ty, {str_ptr_ty, first_byte_ty, idx_ty, bytelen_ty}, false);
+    auto read_mb_fn = llvm::cast<llvm::Function>(
+        module->getOrInsertFunction("readMultiByte", clz_fn_ty).getCallee());
+    functionNamesToFns["readMultiByte"] = read_mb_fn;
+    llvm::BasicBlock* fnEntry = llvm::BasicBlock::Create(*ctx, "entry", read_mb_fn);
+    builder->SetInsertPoint(fnEntry);
+    // switch
+    auto str = &*(read_mb_fn->arg_begin());
+    auto fb = &*(read_mb_fn->arg_begin() + 1);
+    auto idx = &*(read_mb_fn->arg_begin() + 2);
+    auto cond = &*(read_mb_fn->arg_begin() + 3);
+    auto defaultBlock = llvm::BasicBlock::Create(*context.getContext(), "default", read_mb_fn);
+
+    auto switchOp = builder->CreateSwitch(cond, defaultBlock, 3);
+
+    // default
+    builder->SetInsertPoint(defaultBlock);
+    auto fb_zext = builder->CreateZExt(fb, builder->getInt32Ty());
+    builder->CreateRet(fb_zext);
+
+    // byteLen = 2
+    auto lenTwoBlock = llvm::BasicBlock::Create(*context.getContext(), "byteLenTwo", read_mb_fn);
+    switchOp->addCase(builder->getInt8(2), lenTwoBlock);
+    builder->SetInsertPoint(lenTwoBlock);
+    // firstByte & 0x1F
+    auto p12 = builder->CreateAnd(fb, builder->getInt8(0x1F));
+    auto p12_zext = builder->CreateZExt(p12, builder->getInt32Ty());
+    auto p121 = builder->CreateShl(p12_zext, builder->getInt32(6));
+
+    // str[idx + 1]
+    auto idx_1 = builder->CreateAdd(idx, builder->getInt32(1));
+    auto c_mem = builder->CreateGEP(str, idx_1);
+    auto secondByte = builder->CreateLoad(builder->getInt8Ty(), c_mem);
+    auto p2 = builder->CreateAnd(secondByte, builder->getInt8(0x3F));
+    auto p2_zext = builder->CreateZExt(p2, builder->getInt32Ty());
+    auto p1orp2 = builder->CreateOr(p121, p2_zext);
+    builder->CreateRet(p1orp2);
+
+    // byteLen = 3
+    auto lenThreeBlock = llvm::BasicBlock::Create(*context.getContext(), "byteLenThree", read_mb_fn);
+    switchOp->addCase(builder->getInt8(3), lenThreeBlock);
+    builder->SetInsertPoint(lenThreeBlock);
+    auto p13 = builder->CreateAnd(fb, builder->getInt8(0xF));
+    auto p13_zext = builder->CreateZExt(p13, builder->getInt32Ty());
+    auto p131 = builder->CreateShl(p13_zext, builder->getInt32(12));
+
+    // str[idx + 1]
+    auto idx_13 = builder->CreateAdd(idx, builder->getInt32(1));
+    auto c_mem3 = builder->CreateGEP(str, idx_13);
+    auto secondByte3 = builder->CreateLoad(builder->getInt8Ty(), c_mem3);
+
+    auto p23 = builder->CreateAnd(secondByte3, builder->getInt8(0x3F));
+    auto p23_zext = builder->CreateZExt(p23, builder->getInt32Ty());
+    auto p231 = builder->CreateShl(p23_zext, builder->getInt32(6));
+
+    // str[idx + 2]
+    auto idx_23 = builder->CreateAdd(idx, builder->getInt32(2));
+    auto c_mem23 = builder->CreateGEP(str, idx_23);
+    auto thirdByte = builder->CreateLoad(builder->getInt8Ty(), c_mem23);
+
+    auto p223 = builder->CreateAnd(thirdByte, builder->getInt8(0x3F));
+    auto p223_zext = builder->CreateZExt(p223, builder->getInt32Ty());
+
+    // or
+    Value* ref[3] = {p131, p231, p223_zext };
+    auto p1orp2orp3 = builder->CreateOr(ref);
+    builder->CreateRet(p1orp2orp3);
+
+    // byteLen = 4
+    auto lenFourBlock = llvm::BasicBlock::Create(*context.getContext(), "byteLenFour", read_mb_fn);
+    switchOp->addCase(builder->getInt8(4), lenFourBlock);
+    builder->SetInsertPoint(lenFourBlock);
+
+    // fb & 0x07
+    auto p134 = builder->CreateAnd(fb, builder->getInt8(0x7));
+    auto p134_zext = builder->CreateZExt(p134, builder->getInt32Ty());
+    auto p141 = builder->CreateShl(p134_zext, builder->getInt32(18));
+
+    // str[idx + 1]
+    auto idx_14 = builder->CreateAdd(idx, builder->getInt32(1));
+    auto c_mem4 = builder->CreateGEP(str, idx_14);
+    auto secondByte4 = builder->CreateLoad(builder->getInt8Ty(), c_mem4);
+
+    auto p24 = builder->CreateAnd(secondByte4, builder->getInt8(0x3F));
+    auto p24_zext = builder->CreateZExt(p24, builder->getInt32Ty());
+    auto p241 = builder->CreateShl(p24_zext, builder->getInt32(12));
+
+    // str[idx + 2]
+    auto idx_24 = builder->CreateAdd(idx, builder->getInt32(2));
+    auto c_mem24 = builder->CreateGEP(str, idx_24);
+    auto thirdByte4 = builder->CreateLoad(builder->getInt8Ty(), c_mem24);
+
+    auto p224 = builder->CreateAnd(thirdByte4, builder->getInt8(0x3F));
+    auto p224_zext = builder->CreateZExt(p224, builder->getInt32Ty());
+    auto p243 = builder->CreateShl(p224_zext, builder->getInt32(6));
+
+    // str[idx + 3]
+    auto idx_34 = builder->CreateAdd(idx, builder->getInt32(3));
+    auto c_mem34 = builder->CreateGEP(str, idx_34);
+    auto fourthByte = builder->CreateLoad(builder->getInt8Ty(), c_mem34);
+
+    auto p4 = builder->CreateAnd(fourthByte, builder->getInt8(0x3F));
+    auto p4_zext = builder->CreateZExt(p4, builder->getInt32Ty());
+    Value* ref4[4] = {p141, p241, p243,p4_zext };
+    auto p1orp2orp3orp4 = builder->CreateOr(ref4);
+    builder->CreateRet(p1orp2orp3orp4);
+
+  }
   void LLVMCodeGen::Generate(std::unique_ptr<FiniteAutomaton> dfa) {
     auto ctx = context.getContext();
 
@@ -81,7 +246,7 @@ namespace ZRegex {
 
     // c = str[idx]
     auto c_mem = builder->CreateGEP(str, load_idx);
-    auto c = builder->CreateLoad(builder->getInt8Ty(), c_mem);
+    auto c = builder->CreateLoad(builder->getInt32Ty(), c_mem);
     // idx++
     auto inc = builder->CreateAdd(load_idx, builder->getInt64(1));
     builder->CreateStore(inc, idx);
@@ -96,7 +261,8 @@ namespace ZRegex {
       builder->CreateRet(builder->getInt1(false));
     }
   }
-  llvm::BasicBlock* LLVMCodeGen::GenerateTransition(uint32_t from, const FiniteAutomatonTransition& t,
+  llvm::BasicBlock* LLVMCodeGen::GenerateTransition(uint32_t from,
+                                                    const FiniteAutomatonTransition& t,
                                                     llvm::Value* c, llvm::Function* parent,
                                                     llvm::BasicBlock* blk) {
     auto l = t.min, h = t.max;

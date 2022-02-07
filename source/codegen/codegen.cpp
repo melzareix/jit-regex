@@ -29,6 +29,29 @@ namespace ZRegex {
           jit->
           getPointerToFunction("_" + fnName));
     } else {
+      // mbs
+      const char* str = u8"💙";
+//      const char* str = u8"a";
+      auto z = reinterpret_cast<uint8_t (*)(uint8_t)>(jit->getPointerToFunction("multiByteSequenceLength"));
+      std::cout << "hello" << std::endl;
+      auto x = z(str[0]);
+      std::cout << std::to_string(x) << std::endl;
+
+      //readMultiByte
+      auto y = reinterpret_cast<unsigned (*)(char*, char, unsigned, unsigned)>(jit->getPointerToFunction("readMultiByte"));
+      std::cout << "hello2" << std::endl;
+//      const char* str = u8"ꤰ";
+      auto ff = y(const_cast<char *>(str), str[0], 0, x);
+      std::cout << std::to_string(ff) << std::endl;
+
+      // nextByte
+      auto nextByte = reinterpret_cast<unsigned (*)(char*, unsigned*)>(jit->getPointerToFunction("nextByte"));
+      std::cout << "hello3" << std::endl;
+      unsigned idxxx = 0;
+      auto fz = nextByte(const_cast<char *>(str), &idxxx);
+      std::cout << std::to_string(fz) << std::endl;
+      std::cout << std::to_string(idxxx) << std::endl;
+
       traverse_ptr
           = reinterpret_cast<bool (*)(char *, uint64_t n)>(jit->getPointerToFunction("traverse"));
     }
@@ -52,6 +75,9 @@ namespace ZRegex {
   }
   void Codegen::GenerateAndCompileLLVM(std::unique_ptr<FiniteAutomaton> dfa) {
     ZRegex::LLVMCodeGen llvm(context);
+    llvm.GenerateMultiByteSequenceLength();
+    llvm.GenerateReadMultiByte();
+    llvm.GenerateNextByte();
     llvm.Generate(std::move(dfa));
     module = llvm.TakeModule();
   }
