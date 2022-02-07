@@ -34,14 +34,14 @@ namespace ZRegex {
     auto str_ptr_ty = llvm::Type::getInt8PtrTy(*ctx);
     auto idx_ty = llvm::Type::getInt32PtrTy(*ctx);
     auto* clz_fn_ty = llvm::FunctionType::get(ret_ty, {str_ptr_ty, idx_ty}, false);
-    auto read_mb_fn = llvm::cast<llvm::Function>(
+    auto next_byte_fn = llvm::cast<llvm::Function>(
         module->getOrInsertFunction("nextByte", clz_fn_ty).getCallee());
-
-    llvm::BasicBlock* fnEntry = llvm::BasicBlock::Create(*ctx, "entry", read_mb_fn);
+    functionNamesToFns["nextByte"] = next_byte_fn;
+    llvm::BasicBlock* fnEntry = llvm::BasicBlock::Create(*ctx, "entry", next_byte_fn);
     builder->SetInsertPoint(fnEntry);
 
-    auto str = &*(read_mb_fn->arg_begin());
-    auto idx = &*(read_mb_fn->arg_begin() + 1);
+    auto str = &*(next_byte_fn->arg_begin());
+    auto idx = &*(next_byte_fn->arg_begin() + 1);
     auto load_idx = builder->CreateLoad(builder->getInt32Ty(), idx);
 
     // str[idx]
@@ -180,7 +180,7 @@ namespace ZRegex {
     auto bool_ret_ty = llvm::Type::getInt1Ty(*ctx);
 
     auto str_ptr_ty = llvm::Type::getInt8PtrTy(*ctx);
-    auto str_sz_ty = llvm::Type::getInt64Ty(*ctx);
+    auto str_sz_ty = llvm::Type::getInt32Ty(*ctx);
 
     auto* traverse_fn_ty = llvm::FunctionType::get(bool_ret_ty, {str_ptr_ty, str_sz_ty}, false);
     auto traverse_fn = llvm::cast<llvm::Function>(
@@ -191,8 +191,8 @@ namespace ZRegex {
     builder->SetInsertPoint(traverseFuncBlockEntry);
 
     // int idx = 0
-    auto idx_var = builder->CreateAlloca(llvm::Type::getInt64Ty(*ctx), nullptr, "idx");
-    builder->CreateStore(builder->getInt64(0), idx_var);
+    auto idx_var = builder->CreateAlloca(llvm::Type::getInt32Ty(*ctx), nullptr, "idx");
+    builder->CreateStore(builder->getInt32(0), idx_var);
 
     auto initial_state = dfa->initial_state;
     auto states = dfa->GetStates();
@@ -233,7 +233,7 @@ namespace ZRegex {
     auto bchk_cnt
         = llvm::BasicBlock::Create(*ctx, "bounds_cont", builder->GetInsertBlock()->getParent());
 
-    auto load_idx = builder->CreateLoad(builder->getInt64Ty(), idx);
+    auto load_idx = builder->CreateLoad(builder->getInt32Ty(), idx);
     auto cmp = builder->CreateICmp(llvm::CmpInst::ICMP_UGE, load_idx, n);
     builder->CreateCondBr(cmp, bchk_t, bchk_cnt);
 
@@ -245,11 +245,12 @@ namespace ZRegex {
     builder->SetInsertPoint(bchk_cnt);
 
     // c = str[idx]
-    auto c_mem = builder->CreateGEP(str, load_idx);
-    auto c = builder->CreateLoad(builder->getInt32Ty(), c_mem);
+//    auto c_mem = builder->CreateGEP(str, load_idx);
+//    auto c = builder->CreateLoad(builder->getInt32Ty(), c_mem);
+    auto c = builder->CreateCall(functionNamesToFns["nextByte"], {str, idx});
     // idx++
-    auto inc = builder->CreateAdd(load_idx, builder->getInt64(1));
-    builder->CreateStore(inc, idx);
+//    auto inc = builder->CreateAdd(load_idx, builder->getInt32(1));
+//    builder->CreateStore(inc, idx);
 
     spdlog::debug("State{}: Transitions Size: {}", s.id, s.transitions.size());
     llvm::BasicBlock* last_block = nullptr;
