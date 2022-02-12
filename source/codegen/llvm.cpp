@@ -50,9 +50,10 @@ namespace ZRegex {
     // byteLen
     auto byteLen = builder->CreateCall(functionNamesToFns["multiByteSequenceLength"], {firstByte});
     auto tzext = builder->CreateZExt(byteLen, builder->getInt32Ty());
-//    builder->CreateRet(tzext);
+    //    builder->CreateRet(tzext);
     // c = readMultiByte(str, fb, idx, byteLen);
-    auto c = builder->CreateCall(functionNamesToFns["readMultiByte"], {str, firstByte, load_idx, byteLen});
+    auto c = builder->CreateCall(functionNamesToFns["readMultiByte"],
+                                 {str, firstByte, load_idx, byteLen});
     auto idxInc = builder->CreateAdd(load_idx, tzext);
     builder->CreateStore(idxInc, idx);
     builder->CreateRet(c);
@@ -65,7 +66,8 @@ namespace ZRegex {
     auto str_ptr_ty = llvm::Type::getInt8PtrTy(*ctx);
     auto idx_ty = llvm::Type::getInt32Ty(*ctx);
     auto bytelen_ty = llvm::Type::getInt8Ty(*ctx);
-    auto* clz_fn_ty = llvm::FunctionType::get(ret_ty, {str_ptr_ty, first_byte_ty, idx_ty, bytelen_ty}, false);
+    auto* clz_fn_ty
+        = llvm::FunctionType::get(ret_ty, {str_ptr_ty, first_byte_ty, idx_ty, bytelen_ty}, false);
     auto read_mb_fn = llvm::cast<llvm::Function>(
         module->getOrInsertFunction("readMultiByte", clz_fn_ty).getCallee());
     functionNamesToFns["readMultiByte"] = read_mb_fn;
@@ -104,7 +106,8 @@ namespace ZRegex {
     builder->CreateRet(p1orp2);
 
     // byteLen = 3
-    auto lenThreeBlock = llvm::BasicBlock::Create(*context.getContext(), "byteLenThree", read_mb_fn);
+    auto lenThreeBlock
+        = llvm::BasicBlock::Create(*context.getContext(), "byteLenThree", read_mb_fn);
     switchOp->addCase(builder->getInt8(3), lenThreeBlock);
     builder->SetInsertPoint(lenThreeBlock);
     auto p13 = builder->CreateAnd(fb, builder->getInt8(0xF));
@@ -129,7 +132,7 @@ namespace ZRegex {
     auto p223_zext = builder->CreateZExt(p223, builder->getInt32Ty());
 
     // or
-    Value* ref[3] = {p131, p231, p223_zext };
+    Value* ref[3] = {p131, p231, p223_zext};
     auto p1orp2orp3 = builder->CreateOr(ref);
     builder->CreateRet(p1orp2orp3);
 
@@ -168,43 +171,17 @@ namespace ZRegex {
 
     auto p4 = builder->CreateAnd(fourthByte, builder->getInt8(0x3F));
     auto p4_zext = builder->CreateZExt(p4, builder->getInt32Ty());
-    Value* ref4[4] = {p141, p241, p243,p4_zext };
+    Value* ref4[4] = {p141, p241, p243, p4_zext};
     auto p1orp2orp3orp4 = builder->CreateOr(ref4);
     builder->CreateRet(p1orp2orp3orp4);
-
   }
   void LLVMCodeGen::Generate(std::unique_ptr<FiniteAutomaton> dfa) {
-    auto ctx = context.getContext();
-
-    // i1 @traverse_(i8* %str, i32 %str_length)
-    auto bool_ret_ty = llvm::Type::getInt1Ty(*ctx);
-
-    auto str_ptr_ty = llvm::Type::getInt8PtrTy(*ctx);
-    auto str_sz_ty = llvm::Type::getInt32Ty(*ctx);
-
-    auto* traverse_fn_ty = llvm::FunctionType::get(bool_ret_ty, {str_ptr_ty, str_sz_ty}, false);
-    auto traverse_fn = llvm::cast<llvm::Function>(
-        module->getOrInsertFunction("traverse", traverse_fn_ty).getCallee());
-
-    // entry:
-    llvm::BasicBlock* traverseFuncBlockEntry = llvm::BasicBlock::Create(*ctx, "entry", traverse_fn);
-    builder->SetInsertPoint(traverseFuncBlockEntry);
-
-    // int idx = 0
-    auto idx_var = builder->CreateAlloca(llvm::Type::getInt32Ty(*ctx), nullptr, "idx");
-    builder->CreateStore(builder->getInt32(0), idx_var);
-
-    auto initial_state = dfa->initial_state;
-    auto states = dfa->GetStates();
-
-    GenerateState(*initial_state, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
-                  &*(traverse_fn->arg_begin() + 1), true);
-    //
-    for (auto& s : states) {
-      if (s->id == initial_state->id) continue;
-      GenerateState(*s, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
-                    &*(traverse_fn->arg_begin() + 1), false);
+    if (encoding_ == UTF8) {
+      this->GenerateMultiByteSequenceLength();
+      this->GenerateReadMultiByte();
+      this->GenerateNextByte();
     }
+    this->GenerateTraverse(std::move(dfa));
   }
 
   void LLVMCodeGen::GenerateState(FiniteAutomatonState& s, llvm::Function* parent, llvm::Value* idx,
@@ -243,14 +220,17 @@ namespace ZRegex {
 
     // continue after bounds check
     builder->SetInsertPoint(bchk_cnt);
-
-    // c = str[idx]
-//    auto c_mem = builder->CreateGEP(str, load_idx);
-//    auto c = builder->CreateLoad(builder->getInt32Ty(), c_mem);
-    auto c = builder->CreateCall(functionNamesToFns["nextByte"], {str, idx});
-    // idx++
-//    auto inc = builder->CreateAdd(load_idx, builder->getInt32(1));
-//    builder->CreateStore(inc, idx);
+    llvm::Value* c;
+    if (encoding_ == UTF8) {
+      c = builder->CreateCall(functionNamesToFns["nextByte"], {str, idx});
+    } else {
+      // c = str[idx]
+      auto c_mem = builder->CreateGEP(str, load_idx);
+      c = builder->CreateLoad(builder->getInt32Ty(), c_mem);
+      // idx++
+      auto inc = builder->CreateAdd(load_idx, builder->getInt32(1));
+      builder->CreateStore(inc, idx);
+    }
 
     spdlog::debug("State{}: Transitions Size: {}", s.id, s.transitions.size());
     llvm::BasicBlock* last_block = nullptr;
@@ -297,5 +277,38 @@ namespace ZRegex {
           = llvm::BasicBlock::Create(*context.getContext(), "s" + std::to_string(k), parent);
     }
     return states_to_blocks[k];
+  }
+  void LLVMCodeGen::GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa) {
+    auto ctx = context.getContext();
+
+    // i1 @traverse_(i8* %str, i32 %str_length)
+    auto bool_ret_ty = llvm::Type::getInt1Ty(*ctx);
+
+    auto str_ptr_ty = llvm::Type::getInt8PtrTy(*ctx);
+    auto str_sz_ty = llvm::Type::getInt32Ty(*ctx);
+
+    auto* traverse_fn_ty = llvm::FunctionType::get(bool_ret_ty, {str_ptr_ty, str_sz_ty}, false);
+    auto traverse_fn = llvm::cast<llvm::Function>(
+        module->getOrInsertFunction("traverse", traverse_fn_ty).getCallee());
+
+    // entry:
+    llvm::BasicBlock* traverseFuncBlockEntry = llvm::BasicBlock::Create(*ctx, "entry", traverse_fn);
+    builder->SetInsertPoint(traverseFuncBlockEntry);
+
+    // int idx = 0
+    auto idx_var = builder->CreateAlloca(llvm::Type::getInt32Ty(*ctx), nullptr, "idx");
+    builder->CreateStore(builder->getInt32(0), idx_var);
+
+    auto initial_state = dfa->initial_state;
+    auto states = dfa->GetStates();
+
+    GenerateState(*initial_state, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
+                  &*(traverse_fn->arg_begin() + 1), true);
+    //
+    for (auto& s : states) {
+      if (s->id == initial_state->id) continue;
+      GenerateState(*s, traverse_fn, idx_var, &*traverse_fn->arg_begin(),
+                    &*(traverse_fn->arg_begin() + 1), false);
+    }
   }
 }  // namespace ZRegex

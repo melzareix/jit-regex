@@ -13,7 +13,7 @@ namespace ZRegex {
     std::string fnName;
 
     if (backend_type_ == CPP) {
-      module = llvm::parseIRFile(fmt::format("/tmp/{}.ll", filename), Err, *context.getContext());
+      module = llvm::parseIRFile(fmt::format("/tmp/{}.ll", filename_), Err, *context.getContext());
       for (auto &m : module->getFunctionList()) {
         auto fn = m.getName().str();
         if (fn.find("traverse") != std::string::npos) {
@@ -21,6 +21,9 @@ namespace ZRegex {
           break;
         }
       }
+    }
+    for (auto &m : module->getFunctionList()) {
+      std::cout << m.getName().str() << std::endl;
     }
     auto err = jit->addModule(std::move(module));
 
@@ -36,8 +39,8 @@ namespace ZRegex {
   jit_func_t Codegen::GetFnPtr() { return traverse_ptr; }
   void Codegen::GenerateAndCompileCpp(std::unique_ptr<FiniteAutomaton> dfa, const char *filename) {
     // (1) Generate the cpp
-    this->filename = filename;
-    CppCodeGen::Generate(std::move(dfa), filename);
+    this->filename_ = filename;
+    CppCodeGen::Generate(std::move(dfa), filename, encoding_);
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error-prone but works for our case here as prototype
     auto cmd = fmt::format("cd /tmp && clang -std=c++14 -O3 -emit-llvm {}.cpp -o {}.ll -S",
@@ -48,10 +51,7 @@ namespace ZRegex {
     }
   }
   void Codegen::GenerateAndCompileLLVM(std::unique_ptr<FiniteAutomaton> dfa) {
-    ZRegex::LLVMCodeGen llvm(context);
-    llvm.GenerateMultiByteSequenceLength();
-    llvm.GenerateReadMultiByte();
-    llvm.GenerateNextByte();
+    ZRegex::LLVMCodeGen llvm(context, encoding_);
     llvm.Generate(std::move(dfa));
     module = llvm.TakeModule();
   }
