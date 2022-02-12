@@ -5,6 +5,7 @@
 #ifndef ZREGEXSTANDALONE_UTF8_H
 #define ZREGEXSTANDALONE_UTF8_H
 #include <cstdint>
+#include <string>
 
 namespace ZRegex {
   class Utf8 {
@@ -26,7 +27,6 @@ namespace ZRegex {
 
 
     static constexpr unsigned clz(uint8_t a) noexcept {
-      assert(a);
       return __builtin_clz(a) - (8 * (sizeof(unsigned) - sizeof(uint8_t)));
     }
     //---------------------------------------------------------------------------

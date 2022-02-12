@@ -164,7 +164,6 @@ namespace ZRegex {
 
       auto q = std::make_shared<FiniteAutomatonState>();
       p->AddTransition(c, c, q);
-//      p = q;
 
       q->SetAccept();
       fa->SetDeterministic(true);
