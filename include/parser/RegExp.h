@@ -20,7 +20,7 @@ public:
     ZRegex::RegExpVisitor regexVisitor;
     auto fa = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
     fa->Determinize();
-    fa->Visualize();
+//    fa->Visualize();
     return std::move(fa);
   }
 };

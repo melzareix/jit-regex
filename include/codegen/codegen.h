@@ -21,7 +21,7 @@
 namespace ZRegex {
   enum CodegenBackendType { LLVM, CPP };
   enum Encoding { UTF8, ASCII };
-  typedef bool (*jit_func_t)(char*, uint64_t);
+  typedef bool (*jit_func_t)(char*, uint32_t);
   class Codegen {
   private:
     CodegenBackendType backend_type_;

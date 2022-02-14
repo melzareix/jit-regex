@@ -226,7 +226,7 @@ namespace ZRegex {
     } else {
       // c = str[idx]
       auto c_mem = builder->CreateGEP(str, load_idx);
-      c = builder->CreateLoad(builder->getInt32Ty(), c_mem);
+      c = builder->CreateLoad(builder->getInt8Ty(), c_mem);
       // idx++
       auto inc = builder->CreateAdd(load_idx, builder->getInt32(1));
       builder->CreateStore(inc, idx);
@@ -256,15 +256,21 @@ namespace ZRegex {
     if (blk != nullptr) {
       builder->SetInsertPoint(blk);
     }
+    ConstantInt* low = builder->getInt32(l);
+    ConstantInt* high = builder->getInt32(h);
+    if (encoding_ == ASCII) {
+      low = builder->getInt8(l);
+      high = builder->getInt8(h);
+    }
     // single condition
     // if (c == %1) br %s1;
     if (l == h) {
-      auto eq = builder->CreateICmpEQ(c, builder->getInt32(l));
+      auto eq = builder->CreateICmpEQ(c, low);
       builder->CreateCondBr(eq, true_state, next_state);
     } else {
       // if (c >= l && c <= h)
-      auto cgel = builder->CreateICmpUGE(c, builder->getInt32(l));
-      auto cleh = builder->CreateICmpULE(c, builder->getInt32(h));
+      auto cgel = builder->CreateICmpUGE(c, low);
+      auto cleh = builder->CreateICmpULE(c, high);
       auto cnd = builder->CreateAnd(cgel, cleh);
       builder->CreateCondBr(cnd, true_state, next_state);
     }

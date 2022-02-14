@@ -1,0 +1,63 @@
+--------------------------------------------------------------------------------------------------------------
+Benchmark                                                    Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/0_mean              645 ms          643 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/0_median            642 ms          638 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/0_stddev           8.13 ms         8.09 ms            3 Matches=0 DFA LLVM
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/0_cv               1.26 %          1.26 %             3 Matches=0.00% DFA LLVM
+
+
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/1_mean              375 ms          375 ms            3 Matches=1 DFA CPP
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/1_median            376 ms          375 ms            3 Matches=1 DFA CPP
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/1_stddev           2.41 ms         2.19 ms            3 Matches=0 DFA CPP
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/1_cv               0.64 %          0.58 %             3 Matches=0.00% DFA CPP
+
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/2_mean             6.95 ms         6.92 ms            3 Matches=1 RE2
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/2_median           6.91 ms         6.90 ms            3 Matches=1 RE2
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/2_stddev          0.063 ms        0.042 ms            3 Matches=0 RE2
+BENCH_ALL_UTF8/"UNICODE 100MB, p=💙"/2_cv               0.91 %          0.61 %             3 Matches=0.00% RE2
+
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/0_mean          644 ms          643 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/0_median        640 ms          640 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/0_stddev       8.95 ms         8.86 ms            3 Matches=0 DFA LLVM
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/0_cv           1.39 %          1.38 %             3 Matches=0.00% DFA LLVM
+
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/1_mean          374 ms          374 ms            3 Matches=1 DFA CPP
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/1_median        374 ms          373 ms            3 Matches=1 DFA CPP
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/1_stddev       1.31 ms         1.20 ms            3 Matches=0 DFA CPP
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/1_cv           0.35 %          0.32 %             3 Matches=0.00% DFA CPP
+
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/2_mean          255 ms          253 ms            3 Matches=1 RE2
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/2_median        236 ms          236 ms            3 Matches=1 RE2
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/2_stddev       34.6 ms         31.2 ms            3 Matches=0 RE2
+BENCH_ALL_UTF8/"UNICODE 100MB p=💙{3,5}"/2_cv          13.57 %         12.35 %             3 Matches=0.00% RE2
+
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/0_mean                  95.5 ms         90.9 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/0_median                94.8 ms         90.7 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/0_stddev                1.48 ms         1.07 ms            3 Matches=0 DFA LLVM
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/0_cv                    1.55 %          1.18 %             3 Matches=0.00% DFA LLVM
+
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/1_mean                  68.7 ms         68.0 ms            3 Matches=1 DFA CPP
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/1_median                69.3 ms         68.3 ms            3 Matches=1 DFA CPP
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/1_stddev                3.31 ms         2.85 ms            3 Matches=0 DFA CPP
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/1_cv                    4.82 %          4.19 %             3 Matches=0.00% DFA CPP
+
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/2_mean                  6.90 ms         6.87 ms            3 Matches=1 RE2
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/2_median                6.87 ms         6.84 ms            3 Matches=1 RE2
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/2_stddev               0.114 ms        0.101 ms            3 Matches=0 RE2
+BENCH_ALL_ASCII/"ASCII 100MB p=1"/2_cv                    1.65 %          1.46 %             3 Matches=0.00% RE2
+
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/0_mean              70.6 ms         70.4 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/0_median            70.2 ms         70.0 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/0_stddev           0.809 ms        0.705 ms            3 Matches=0 DFA LLVM
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/0_cv                1.15 %          1.00 %             3 Matches=0.00% DFA LLVM
+
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/1_mean              61.7 ms         61.5 ms            3 Matches=1 DFA CPP
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/1_median            62.0 ms         61.7 ms            3 Matches=1 DFA CPP
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/1_stddev           0.615 ms        0.527 ms            3 Matches=0 DFA CPP
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/1_cv                1.00 %          0.86 %             3 Matches=0.00% DFA CPP
+
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/2_mean               342 ms          339 ms            3 Matches=1 RE2
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/2_median             246 ms          238 ms            3 Matches=1 RE2
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/2_stddev             180 ms          182 ms            3 Matches=0 RE2
+BENCH_ALL_ASCII/"ASCII 10MB p=1{3,5}"/2_cv               52.55 %         53.51 %             3 Matches=0.00% RE2

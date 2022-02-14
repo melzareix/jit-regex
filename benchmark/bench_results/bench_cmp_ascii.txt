@@ -1,0 +1,62 @@
+--------------------------------------------------------------------------------------------------------------------------
+Benchmark                                                                Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------------------------------------------
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/0_mean          812 ms          805 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/0_median        801 ms          797 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/0_stddev       29.5 ms         23.9 ms            3 Matches=0 DFA LLVM
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/0_cv           3.63 %          2.97 %             3 Matches=0.00% DFA LLVM
+
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/1_mean          615 ms          513 ms            3 Matches=1 DFA CPP
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/1_median        577 ms          516 ms            3 Matches=1 DFA CPP
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/1_stddev       72.5 ms         6.45 ms            3 Matches=0 DFA CPP
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/1_cv          11.79 %          1.26 %             3 Matches=0.00% DFA CPP
+
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/2_mean         6.70 ms         6.68 ms            3 Matches=1 RE2
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/2_median       6.65 ms         6.64 ms            3 Matches=1 RE2
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/2_stddev      0.169 ms        0.146 ms            3 Matches=0 RE2
+BENCH_ALL_UTF8/"Unicode Matcher, Ascii p/t 100MB, p=1"/2_cv           2.52 %          2.19 %             3 Matches=0.00% RE2
+
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/0_mean                  72.6 ms         72.4 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/0_median                72.8 ms         72.6 ms            3 Matches=1 DFA LLVM
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/0_stddev                1.07 ms        0.988 ms            3 Matches=0 DFA LLVM
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/0_cv                    1.48 %          1.36 %             3 Matches=0.00% DFA LLVM
+
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/1_mean                  64.6 ms         64.4 ms            3 Matches=1 DFA CPP
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/1_median                64.6 ms         64.5 ms            3 Matches=1 DFA CPP
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/1_stddev               0.283 ms        0.253 ms            3 Matches=0 DFA CPP
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/1_cv                    0.44 %          0.39 %             3 Matches=0.00% DFA CPP
+
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/2_mean                  6.69 ms         6.67 ms            3 Matches=1 RE2
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/2_median                6.67 ms         6.66 ms            3 Matches=1 RE2
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/2_stddev               0.131 ms        0.120 ms            3 Matches=0 RE2
+BENCH_ALL_ASCII/"ASCII Everything 100MB, p=1"/2_cv                    1.96 %          1.79 %             3 Matches=0.00% RE2
+
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/0_mean              705 ms          702 ms            3 Matches=104.858k DFA LLVM
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/0_median            700 ms          698 ms            3 Matches=104.858k DFA LLVM
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/0_stddev           9.11 ms         7.84 ms            3 Matches=0 DFA LLVM
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/0_cv               1.29 %          1.12 %             3 Matches=0.00% DFA LLVM
+
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/1_mean              679 ms          678 ms            3 Matches=104.858k DFA CPP
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/1_median            679 ms          678 ms            3 Matches=104.858k DFA CPP
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/1_stddev           1.52 ms         1.24 ms            3 Matches=0 DFA CPP
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/1_cv               0.22 %          0.18 %             3 Matches=0.00% DFA CPP
+
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/2_mean              655 ms          654 ms            3 Matches=104.858k RE2
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/2_median            658 ms          656 ms            3 Matches=104.858k RE2
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/2_stddev           5.11 ms         4.63 ms            3 Matches=0 RE2
+BENCH_LINE/"Unicode Matcher, Ascii p/t 100MB, p=Y"/2_cv               0.78 %          0.71 %             3 Matches=0.00% RE2
+
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/0_mean                        813 ms          775 ms            3 Matches=104.858k DFA LLVM
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/0_median                      715 ms          711 ms            3 Matches=104.858k DFA LLVM
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/0_stddev                      204 ms          144 ms            3 Matches=0 DFA LLVM
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/0_cv                        25.11 %         18.59 %             3 Matches=0.00% DFA LLVM
+
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/1_mean                       1084 ms          859 ms            3 Matches=104.858k DFA CPP
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/1_median                     1042 ms          842 ms            3 Matches=104.858k DFA CPP
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/1_stddev                      121 ms         38.2 ms            3 Matches=0 DFA CPP
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/1_cv                        11.20 %          4.44 %             3 Matches=0.00% DFA CPP
+
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/2_mean                       1149 ms          890 ms            3 Matches=104.858k RE2
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/2_median                     1144 ms          902 ms            3 Matches=104.858k RE2
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/2_stddev                      109 ms         29.7 ms            3 Matches=0 RE2
+BENCH_LINE/"ASCII Everything 100MB, p=Y"/2_cv                         9.51 %          3.34 %             3 Matches=0.00% RE2

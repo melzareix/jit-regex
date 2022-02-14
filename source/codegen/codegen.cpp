@@ -22,17 +22,15 @@ namespace ZRegex {
         }
       }
     }
-    for (auto &m : module->getFunctionList()) {
-      std::cout << m.getName().str() << std::endl;
-    }
+
     auto err = jit->addModule(std::move(module));
 
     if (backend_type_ == CPP) {
       traverse_ptr
-          = reinterpret_cast<bool (*)(char *, uint64_t n)>(jit->getPointerToFunction("_" + fnName));
+          = reinterpret_cast<bool (*)(char *, uint32_t n)>(jit->getPointerToFunction("_" + fnName));
     } else {
       traverse_ptr
-          = reinterpret_cast<bool (*)(char *, uint64_t n)>(jit->getPointerToFunction("traverse"));
+          = reinterpret_cast<bool (*)(char *, uint32_t n)>(jit->getPointerToFunction("traverse"));
     }
   }
   bool Codegen::Run(const char *inp) { return traverse_ptr(const_cast<char *>(inp), strlen(inp)); }
