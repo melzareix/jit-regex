@@ -64,7 +64,6 @@ namespace ZRegex {
       std::string rr;
       llvm::raw_string_ostream stream(rr);
       execution_session.dump(stream);
-      std::cout << rr << std::endl;
 
       auto sym = execution_session.lookup(&mainDylib, name);
       //  auto e = sym.takeError();

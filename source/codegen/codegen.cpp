@@ -54,8 +54,9 @@ namespace ZRegex {
     module = llvm.TakeModule();
   }
   void Codegen::Compile(const char *pattern) {
+    if (traverse_ptr != nullptr) return;
     auto dfa = RegExp::GetAutomatonForPattern(pattern);
-
+    spdlog::info("Compiling pattern {}", pattern);
     if (backend_type_ == CPP) {
       GenerateAndCompileCpp(std::move(dfa), "regex");
     } else {

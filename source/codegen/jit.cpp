@@ -1,83 +1,91 @@
 #include "codegen/jit.h"
 
+#include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
-#include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Verifier.h>
-#include <llvm/Transforms/InstCombine/InstCombine.h>
-#include <llvm/Transforms/Scalar.h>
-#include <llvm/Transforms/Scalar/GVN.h>
-
-#include <iostream>
+#include <llvm/Passes/PassBuilder.h>
 
 #include "llvm/Support/raw_os_ostream.h"
 #include "spdlog/spdlog.h"
 
-using JIT = ZRegex::JIT;
-
-namespace {
+namespace ZRegex {
 
   void optimizeModule(llvm::Module& module) {
-    // skip optimization for cpp
     if (module.getName() != "rgx_module") return;
-    // Create a function pass manager
-    auto passManager = std::make_unique<llvm::legacy::FunctionPassManager>(&module);
+    // Create the analysis managers.
+    llvm::LoopAnalysisManager LAM;
+    llvm::FunctionAnalysisManager FAM;
+    llvm::CGSCCAnalysisManager CGAM;
+    llvm::ModuleAnalysisManager MAM;
 
-    // Add passes
-    passManager->add(llvm::createVerifierPass());
-    passManager->add(llvm::createInstructionCombiningPass());
-    passManager->add(llvm::createReassociatePass());
-    passManager->add(llvm::createGVNPass());
-    passManager->add(llvm::createCFGSimplificationPass());
-    passManager->doInitialization();
+    // Create the new pass manager builder.
+    // Take a look at the PassBuilder constructor parameters for more
+    // customization, e.g. specifying a TargetMachine or various debugging
+    // options.
 
-    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
-      spdlog::debug("################ BEFORE OPTIMIZATION PASS ################");
-      module.print(llvm::errs(), nullptr);
-    }
+    llvm::PassBuilder PB;
+    // Make sure to use the default alias analysis pipeline, otherwise we'll end
+    // up only using a subset of the available analyses.
+    FAM.registerPass([&] { return PB.buildDefaultAAPipeline(); });
 
-    // Run the optimizations
-    for (auto& fn : module) {
-      passManager->run(fn);
-    }
+    // Register all the basic analyses with the managers.
+    PB.registerModuleAnalyses(MAM);
+    PB.registerCGSCCAnalyses(CGAM);
+    PB.registerFunctionAnalyses(FAM);
+    PB.registerLoopAnalyses(LAM);
+    PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
+
+    // Create the pass manager.
+    // This one corresponds to a typical -O2 optimization pipeline.
+    llvm::ModulePassManager MPM
+        = PB.buildPerModuleDefaultPipeline(llvm::PassBuilder::OptimizationLevel::O2);
+
+    PB.registerPipelineStartEPCallback(
+        [&](llvm::ModulePassManager& MPM, llvm::PassBuilder::OptimizationLevel Level) {
+          MPM.addPass(PB.buildInlinerPipeline(llvm::PassBuilder::OptimizationLevel::O2,
+                                              llvm::ThinOrFullLTOPhase::None));
+        });
+
+    // Optimize the IR!
+    MPM.run(module, MAM);
     if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
       spdlog::info("################ AFTER OPTIMIZATION PASS ################");
       module.print(llvm::errs(), nullptr);
     }
   }
 
-}  // namespace
-
-JIT::JIT(llvm::orc::ThreadSafeContext& ctx)
-    : target_machine(llvm::EngineBuilder().selectTarget()),
-      data_layout(target_machine->createDataLayout()),
-      execution_session(),
-      context(ctx),
-      object_layer(execution_session,
-                   []() { return std::make_unique<llvm::SectionMemoryManager>(); }),
-      compile_layer(execution_session, object_layer,
-                    std::make_unique<llvm::orc::SimpleCompiler>(*target_machine)),
-      optimize_layer(
-          execution_session, compile_layer,
-          [this](llvm::orc::ThreadSafeModule m, const llvm::orc::MaterializationResponsibility&) {
-            optimizeModule(*m.getModuleUnlocked());
-            return m;
-          }),
-      mainDylib(cantFail(execution_session.createJITDylib("<main>"), "createJITDylib failed")) {
-  // Lookup symbols in host process
-  auto generator = llvm::cantFail(llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(
-      data_layout.getGlobalPrefix(), [](auto&) { return true; }));
-  mainDylib.addGenerator(move(generator));
-}
-
-llvm::Error JIT::addModule(std::unique_ptr<llvm::Module> module) {
-  return optimize_layer.add(mainDylib, llvm::orc::ThreadSafeModule{move(module), context});
-}
-
-void* JIT::getPointerToFunction(const std::string& name) {
-  auto error_or_symbol = execution_session.lookup(&mainDylib, name);
-  if (!error_or_symbol) {
-    spdlog::error(llvm::toString(error_or_symbol.takeError()));
-    return nullptr;
+  JIT::JIT(llvm::orc::ThreadSafeContext& ctx)
+      : target_machine(llvm::EngineBuilder().selectTarget()),
+        data_layout(target_machine->createDataLayout()),
+        execution_session(),
+        context(ctx),
+        object_layer(execution_session,
+                     []() { return std::make_unique<llvm::SectionMemoryManager>(); }),
+        compile_layer(execution_session, object_layer,
+                      std::make_unique<llvm::orc::SimpleCompiler>(*target_machine)),
+        optimize_layer(
+            execution_session, compile_layer,
+            [this](llvm::orc::ThreadSafeModule m, const llvm::orc::MaterializationResponsibility&) {
+              optimizeModule(*m.getModuleUnlocked());
+              return m;
+            }),
+        mainDylib(cantFail(execution_session.createJITDylib("<main>"), "createJITDylib failed")) {
+    // Lookup symbols in host process
+    auto generator = llvm::cantFail(llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(
+        data_layout.getGlobalPrefix(), [](auto&) { return true; }));
+    mainDylib.addGenerator(move(generator));
   }
-  return reinterpret_cast<void*>(static_cast<uintptr_t>(error_or_symbol->getAddress()));
-}
+
+  llvm::Error JIT::addModule(std::unique_ptr<llvm::Module> module) {
+    return optimize_layer.add(mainDylib, llvm::orc::ThreadSafeModule{move(module), context});
+  }
+
+  void* JIT::getPointerToFunction(const std::string& name) {
+    auto error_or_symbol = execution_session.lookup(&mainDylib, name);
+    if (!error_or_symbol) {
+      spdlog::error(llvm::toString(error_or_symbol.takeError()));
+      return nullptr;
+    }
+    return reinterpret_cast<void*>(static_cast<uintptr_t>(error_or_symbol->getAddress()));
+  }
+};  // namespace ZRegex

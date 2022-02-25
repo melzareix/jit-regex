@@ -1,0 +1,21 @@
+{
+  "Suites": [
+    {
+      "name": "Unicode",
+      "tests": [
+        {
+          "pattern": "ä",
+          "dataset": "unicode_100mb.txt"
+        },
+        {
+          "pattern": "ä{1,4}",
+          "dataset": "unicode_100mb.txt"
+        },
+        {
+          "pattern": "([äTȧ]){2,5}",
+          "dataset": "unicode_100mb.txt"
+        }
+      ]
+    }
+  ]
+}

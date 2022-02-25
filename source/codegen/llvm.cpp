@@ -6,6 +6,7 @@
 
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 
 using namespace llvm;
 namespace ZRegex {
@@ -49,6 +50,7 @@ namespace ZRegex {
     auto firstByte = builder->CreateLoad(builder->getInt8Ty(), c_mem);
     // byteLen
     auto byteLen = builder->CreateCall(functionNamesToFns["multiByteSequenceLength"], {firstByte});
+
     auto tzext = builder->CreateZExt(byteLen, builder->getInt32Ty());
     //    builder->CreateRet(tzext);
     // c = readMultiByte(str, fb, idx, byteLen);
