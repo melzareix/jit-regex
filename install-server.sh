@@ -25,8 +25,10 @@ fi
 if [ "$1" == "--standalone" ]
 then
   cd "$HOME"/jit-regex && cmake -S standalone -B build/standalone -G Ninja -DANTLR_EXECUTABLE="$HOME/antlr4/antlr-4.9.3-complete.jar"
+  cd "$HOME"/jit-regex && cmake --build build/standalone
   echo "Usage: $HOME/jit-regex/build/standalone/ZRegex -r Regex -b \"llvm\""
 else
   cd "$HOME"/jit-regex && cmake -S benchmark -B build/benchmark -G Ninja -DANTLR_EXECUTABLE="$HOME/antlr4/antlr-4.9.3-complete.jar"
+  cd "$HOME"/jit-regex && cmake --build build/benchmark
   echo "Usage: $HOME/jit-regex/build/benchmark/ZRegex_BM"
 fi
