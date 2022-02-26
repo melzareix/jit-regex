@@ -66,11 +66,11 @@ add_definitions(-DANTLR4CPP_STATIC)
 set(ANTLR4_WITH_STATIC_CRT OFF)
 # add external build for antlrcpp
 include(cmake/antlr/ExternalAntlr4Cpp.cmake)
+
 message("ANTLR_ROOT ${ANTLR4_ROOT}")
 message("ANTLR4_INCLUDE_DIRS ${ANTLR4_INCLUDE_DIRS}")
 # add antrl4cpp artifacts to project environment
 include_directories(${ANTLR4_INCLUDE_DIRS})
-message("include_dirss ${ANTLR4_OUTPUT_DIR}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/antlr/")
 find_package(ANTLR REQUIRED)
 
@@ -82,15 +82,15 @@ include_directories(${PROJECT_SOURCE_DIR} ${GRAMMAR_SRC})
 message("RegexGrammarParser ${ANTLR_RegexGrammarParser_CXX_OUTPUTS}")
 # llvm
 if (APPLE)
-    list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/llvm@12/lib/cmake")
+    list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/llvm@13/lib/cmake")
 endif (APPLE)
 
-find_package(LLVM 12 REQUIRED CONFIG)
+find_package(LLVM 13 REQUIRED CONFIG)
 message(STATUS "LLVM_INCLUDE_DIRS = ${LLVM_INCLUDE_DIRS}")
 message(STATUS "LLVM_INSTALL_PREFIX = ${LLVM_INSTALL_PREFIX}")
 
 add_definitions(${LLVM_DEFINITIONS})
-llvm_map_components_to_libnames(LLVM_LIBS core support mcjit x86codegen OrcJIT)
+llvm_map_components_to_libnames(LLVM_LIBS core support mcjit x86codegen OrcJIT ${LLVM_TARGETS_TO_BUILD})
 message(STATUS "LLVMLIBS: ${LLVM_LIBS}")
 
 # ---- Add source files ----

@@ -57,7 +57,7 @@ namespace ZRegex {
   JIT::JIT(llvm::orc::ThreadSafeContext& ctx)
       : target_machine(llvm::EngineBuilder().selectTarget()),
         data_layout(target_machine->createDataLayout()),
-        execution_session(),
+        execution_session(std::make_unique<llvm::orc::UnsupportedExecutorProcessControl>()),
         context(ctx),
         object_layer(execution_session,
                      []() { return std::make_unique<llvm::SectionMemoryManager>(); }),

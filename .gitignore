@@ -3,3 +3,6 @@
 /cpm_modules
 .DS_Store
 cmake-build-debug
+.idea
+/include/parser/grammar/*
+!/include/parser/grammar/Regex.g4
