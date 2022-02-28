@@ -16,16 +16,14 @@
 #include "llvm/ExecutionEngine/Orc/Mangling.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/SourceMgr.h"
+#include "opts.h"
 #include "spdlog/spdlog.h"
 
 namespace ZRegex {
-  enum CodegenBackendType { LLVM, CPP };
-  enum Encoding { UTF8, ASCII };
   typedef bool (*jit_func_t)(char*, uint32_t);
   class Codegen {
   private:
-    CodegenBackendType backend_type_;
-    Encoding encoding_;
+    CodegenOpts opts_;
     const char* filename_;
     jit_func_t traverse_ptr;
     std::unique_ptr<llvm::Module> module;
@@ -35,14 +33,14 @@ namespace ZRegex {
     void GenerateAndCompileCpp(const std::unique_ptr<FiniteAutomaton> dfa, const char* filename);
     void GenerateAndCompileLLVM(const std::unique_ptr<FiniteAutomaton> dfa);
     void JIT();
+    void JIT_cpp();
     jit_func_t GetFnPtr();
 
   public:
-    Codegen(const CodegenBackendType& backend_type, const Encoding& encoding)
-        : backend_type_(backend_type),
-          traverse_ptr(nullptr),
+    Codegen(const CodegenOpts& opts)
+        : traverse_ptr(nullptr),
           filename_(nullptr),
-          encoding_(encoding),
+          opts_(opts),
           context({std::make_unique<llvm::LLVMContext>()}) {
       llvm::InitializeNativeTarget();
       llvm::InitializeNativeTargetAsmPrinter();

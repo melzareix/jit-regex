@@ -1,12 +1,11 @@
 #pragma once
 
-
 #include <cstdint>
 #include <string>
 
-#include "parser/RegExpVisitor.h"
 #include "parser/grammar/RegexLexer.h"
 #include "parser/grammar/RegexParser.h"
+#include "parser/visitors/RegExpVisitor.h"
 
 class RegExp {
 public:
@@ -20,7 +19,7 @@ public:
     ZRegex::RegExpVisitor regexVisitor;
     auto fa = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
     fa->Determinize();
-//    fa->Visualize();
+    //    fa->Visualize();
     return std::move(fa);
   }
 };

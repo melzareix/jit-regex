@@ -178,7 +178,7 @@ namespace ZRegex {
     builder->CreateRet(p1orp2orp3orp4);
   }
   void LLVMCodeGen::Generate(std::unique_ptr<FiniteAutomaton> dfa) {
-    if (encoding_ == UTF8) {
+    if (opts_.GetEncoding() == CodegenOpts::DFAEncoding::UTF8) {
       this->GenerateMultiByteSequenceLength();
       this->GenerateReadMultiByte();
       this->GenerateNextByte();
@@ -223,7 +223,7 @@ namespace ZRegex {
     // continue after bounds check
     builder->SetInsertPoint(bchk_cnt);
     llvm::Value* c;
-    if (encoding_ == UTF8) {
+    if (opts_.GetEncoding() == CodegenOpts::DFAEncoding::UTF8) {
       c = builder->CreateCall(functionNamesToFns["nextByte"], {str, idx});
     } else {
       // c = str[idx]
@@ -260,7 +260,7 @@ namespace ZRegex {
     }
     ConstantInt* low = builder->getInt32(l);
     ConstantInt* high = builder->getInt32(h);
-    if (encoding_ == ASCII) {
+    if (opts_.GetEncoding() == CodegenOpts::DFAEncoding::ASCII) {
       low = builder->getInt8(l);
       high = builder->getInt8(h);
     }

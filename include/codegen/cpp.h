@@ -10,21 +10,25 @@
 
 #include "codegen.h"
 #include "fa/fa.h"
+#include "opts.h"
 #include "spdlog/fmt/fmt.h"
 
 namespace ZRegex {
   class CppCodeGen {
   public:
-    static void Generate(std::unique_ptr<FiniteAutomaton> dfa, const char* filename,
-                         const Encoding& encoding);
+    CppCodeGen(std::unique_ptr<FiniteAutomaton> dfa, const CodegenOpts& opts, const char* filename)
+        : opts(opts), dfa(std::move(dfa)), filename(filename){};
+    void Generate();
 
   private:
-    static void GenerateUtf8(std::ofstream& fs);
-    static void GenerateDebuggingMain(std::ofstream& fs);
-    static void GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream& fs,
-                                 const Encoding& encoding);
-    static void GenerateState(const FiniteAutomatonState& state, std::ofstream& fs,
-                              const Encoding& encoding);
+    CodegenOpts opts;
+    std::unique_ptr<FiniteAutomaton> dfa;
+    const char* filename;
+
+    void GenerateUtf8(std::ofstream& fs);
+    void GenerateDebuggingMain(std::ofstream& fs);
+    void GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream& fs);
+    void GenerateState(const FiniteAutomatonState& state, std::ofstream& fs);
   };
 
 }  // namespace ZRegex

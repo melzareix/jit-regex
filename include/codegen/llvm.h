@@ -15,6 +15,7 @@
 
 #include "fa/fa.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
+#include "opts.h"
 #include "spdlog/fmt/fmt.h"
 
 namespace ZRegex {
@@ -24,7 +25,7 @@ namespace ZRegex {
     std::map<uint32_t, llvm::BasicBlock*> states_to_blocks;
     std::unique_ptr<llvm::Module> module;
     llvm::orc::ThreadSafeContext context;
-    Encoding encoding_;
+    CodegenOpts opts_;
     std::map<std::string, llvm::Function*> functionNamesToFns;
 
     llvm::BasicBlock* GetOrCreateBlock(uint32_t k, llvm::Function* parent);
@@ -42,8 +43,8 @@ namespace ZRegex {
     void GenerateReadMultiByte();
 
   public:
-    explicit LLVMCodeGen(llvm::orc::ThreadSafeContext& context, Encoding encoding)
-        : context(context), encoding_(encoding) {
+    explicit LLVMCodeGen(llvm::orc::ThreadSafeContext& context, const CodegenOpts& opts)
+        : context(context), opts_(opts) {
       builder = std::make_unique<llvm::IRBuilder<>>(*context.getContext());
       module = std::make_unique<llvm::Module>("rgx_module", *context.getContext());
     }

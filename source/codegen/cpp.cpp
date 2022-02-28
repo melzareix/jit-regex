@@ -9,16 +9,15 @@
 
 //#define DEBUG 1
 namespace ZRegex {
-  void CppCodeGen::Generate(std::unique_ptr<FiniteAutomaton> dfa, const char *filename,
-                            const Encoding &encoding) {
+  void CppCodeGen::Generate() {
     std::ofstream fs;
     // file is temporary compiled
     auto fp = fmt::format("/tmp/{}.cpp", filename);
     fs.open(fp);
-    if (encoding == UTF8) {
+    if (opts.GetEncoding() == CodegenOpts::DFAEncoding::UTF8) {
       CppCodeGen::GenerateUtf8(fs);
     }
-    CppCodeGen::GenerateTraverse(std::move(dfa), fs, encoding);
+    CppCodeGen::GenerateTraverse(std::move(dfa), fs);
 #ifdef DEBUG
     CppCodeGen::GenerateDebuggingMain(fs);
 #endif
@@ -75,8 +74,7 @@ namespace ZRegex {
     fs << "  return c;";
     fs << "}" << std::endl;
   }
-  void CppCodeGen::GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream &fs,
-                                    const Encoding &encoding) {
+  void CppCodeGen::GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream &fs) {
     fs << "bool traverse(const char* str, unsigned int n) {";
     fs << "unsigned int idx = 0;" << std::endl;
 
@@ -85,23 +83,22 @@ namespace ZRegex {
     auto states = dfa->GetStates();
 
     // Initial State
-    CppCodeGen::GenerateState(*dfa->initial_state, fs, encoding);
+    CppCodeGen::GenerateState(*dfa->initial_state, fs);
 
     for (const auto &state : states) {
       if (state->id == dfa->initial_state->id) continue;
       // accept state not needed just return true if transition is to one
       // since we are only interested in matching
       if (state->accept) continue;
-      CppCodeGen::GenerateState(*state, fs, encoding);
+      CppCodeGen::GenerateState(*state, fs);
     }
     fs << "}" << std::endl;
   }
 
-  void CppCodeGen::GenerateState(const FiniteAutomatonState &state, std::ofstream &fs,
-                                 const Encoding &encoding) {
+  void CppCodeGen::GenerateState(const FiniteAutomatonState &state, std::ofstream &fs) {
     fs << "s" << state.id << ": " << std::endl;
     fs << "  if (idx >= n) return false;" << std::endl;
-    if (encoding == UTF8) {
+    if (opts.GetEncoding() == CodegenOpts::DFAEncoding::UTF8) {
       fs << " c = nextByte(str, idx);" << std::endl;
     } else {
       fs << "  c = (unsigned int)(unsigned char)str[idx++];" << std::endl;
