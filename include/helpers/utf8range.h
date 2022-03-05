@@ -36,6 +36,8 @@ namespace ZRegex {
     uint8_t start;
     uint8_t end;
 
+    std::vector<uint8_t> GetRange() { return {start, end}; }
+
     std::string Print() {
       if (start == end) {
         return fmt::format("[{:x}]", start);
@@ -100,6 +102,7 @@ namespace ZRegex {
     std::vector<ScalarRange> range_stack;
 
   public:
+    UTF8Range(uint32_t start, uint32_t end) { Push(start, end); }
     UTF8Range(std::string& start, std::string& end) {
       auto s_u32
           = Utf8::ReadMultiByteCase(start, start[0], Utf8::multiByteSequenceLength(start[0]));
@@ -120,7 +123,7 @@ namespace ZRegex {
       }
     }
     bool hasNext() { return !range_stack.empty(); }
-    void PrintRange() {
+    std::vector<std::vector<uint8_t>> NextRange() {
     outer:
       while (!range_stack.empty()) {
         auto r = range_stack.back();
@@ -152,7 +155,7 @@ namespace ZRegex {
           if (r.is_ascii()) {
             auto rr = UTF8SE({r.start, r.end});
             spdlog::info("{}", rr.Print());
-            return;
+            return {rr.GetRange()};
           }
 
           for (size_t i = 1; i <= MAX_BYTES; i++) {
@@ -180,10 +183,15 @@ namespace ZRegex {
             rng.push_back({start_dst[i], end_dst[i]});
             out += rng.back().Print();
           }
+          std::vector<std::vector<uint8_t>> result;
+          for (auto v : rng) {
+            result.push_back(v.GetRange());
+          }
           spdlog::info(out);
-          return;
+          return result;
         }
       }
+      return {};
     }
   };
 

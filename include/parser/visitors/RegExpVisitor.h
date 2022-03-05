@@ -15,6 +15,11 @@
 
 namespace ZRegex {
   class RegExpVisitor : public RegexVisitor {
+  private:
+    bool byte_dfa_utf8_;
+
+  public:
+    RegExpVisitor(bool byte_dfa_utf8 = false) : byte_dfa_utf8_(byte_dfa_utf8){};
     antlrcpp::Any visitAlternation(RegexParser::AlternationContext *context) override {
       // single element return it
       if (context->expression().size() == 1) {
@@ -91,7 +96,7 @@ namespace ZRegex {
     }
     antlrcpp::Any visitAtom(RegexParser::AtomContext *context) override {
       if (context->Wildcard()) {
-        auto c = ZRegex::FAFactory::AnyChar();
+        auto c = ZRegex::FAFactory::AnyChar(byte_dfa_utf8_);
         return ZRegex::FAFactory::KleeneStar(std::move(c));
       }
       if (context->capture) {
@@ -129,7 +134,7 @@ namespace ZRegex {
     }
 
     antlrcpp::Any visitAnyChar(RegexParser::AnyCharContext *context) override {
-      return ZRegex::FAFactory::AnyChar();
+      return ZRegex::FAFactory::AnyChar(byte_dfa_utf8_);
     }
     antlrcpp::Any visitCcPositive(RegexParser::CcPositiveContext *context) override {
       std::vector<std::unique_ptr<FiniteAutomaton>> automatons;
@@ -162,7 +167,16 @@ namespace ZRegex {
 
       auto min_char = *min->initial_state->transitions.begin();
       auto max_char = *max->initial_state->transitions.begin();
-      return ZRegex::FAFactory::CharRangeAutomaton(min_char.min, max_char.min);
+
+      if (!byte_dfa_utf8_) {
+        return ZRegex::FAFactory::CharRangeAutomaton(min_char.min, max_char.min);
+      }
+      auto range_ = UTF8Range(min_char.min, max_char.min);
+      std::vector<std::vector<std::vector<uint8_t>>> ranges;
+      while (range_.hasNext()) {
+        ranges.push_back(range_.NextRange());
+      }
+      return FAFactory::RangeDFA(ranges);
     }
     antlrcpp::Any visitPredefinedClass(RegexParser::PredefinedClassContext *context) override {
       return std::move(

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 # ---- Project ----
-
 # Note: update this to your new project's name and version
 project(
         ZRegex
@@ -10,7 +9,6 @@ project(
 )
 
 # ---- Include guards ----
-
 if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(
             FATAL_ERROR
@@ -88,9 +86,16 @@ endif (APPLE)
 find_package(LLVM 13 REQUIRED CONFIG)
 message(STATUS "LLVM_INCLUDE_DIRS = ${LLVM_INCLUDE_DIRS}")
 message(STATUS "LLVM_INSTALL_PREFIX = ${LLVM_INSTALL_PREFIX}")
+message(STATUS "LLVM_DEFINITIONS = ${LLVM_DEFINITIONS}")
+message(STATUS "LLVM_TARGETS_TO_BUILD = ${LLVM_TARGETS_TO_BUILD}")
 
-add_definitions(${LLVM_DEFINITIONS})
-llvm_map_components_to_libnames(LLVM_LIBS core support mcjit x86codegen OrcJIT ${LLVM_TARGETS_TO_BUILD})
+separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+message(STATUS "LLVM_DEFINITIONS_LIST = ${LLVM_DEFINITIONS_LIST}")
+add_definitions(${LLVM_DEFINITIONS_LIST})
+
+# add_definitions(${LLVM_DEFINITIONS})
+llvm_map_components_to_libnames(LLVM_LIBS core support irreader x86codegen orcjit ${LLVM_TARGETS_TO_BUILD})
+# llvm_map_components_to_libnames(LLVM_LIBS orcjit support core irreader x86codegen )
 message(STATUS "LLVMLIBS: ${LLVM_LIBS}")
 
 # ---- Add source files ----

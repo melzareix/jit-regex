@@ -9,17 +9,18 @@
 
 class RegExp {
 public:
-  static std::unique_ptr<ZRegex::FiniteAutomaton> GetAutomatonForPattern(
-      const std::string& pattern) {
+  static std::unique_ptr<ZRegex::FiniteAutomaton> GetAutomatonForPattern(const std::string& pattern,
+                                                                         bool byte_dfa_utf8
+                                                                         = false) {
     antlr4::ANTLRInputStream input(pattern);
     RegexLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     RegexParser parser(&tokens);
     auto tree = parser.regex();
-    ZRegex::RegExpVisitor regexVisitor;
+    ZRegex::RegExpVisitor regexVisitor(byte_dfa_utf8);
     auto fa = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
     fa->Determinize();
-    //    fa->Visualize();
+    fa->Visualize();
     return std::move(fa);
   }
 };

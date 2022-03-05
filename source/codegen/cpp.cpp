@@ -14,8 +14,8 @@ namespace ZRegex {
     // file is temporary compiled
     auto fp = fmt::format("/tmp/{}.cpp", filename);
     fs.open(fp);
-    if (opts.GetEncoding() == CodegenOpts::DFAEncoding::UTF8) {
-      CppCodeGen::GenerateUtf8(fs);
+    if (opts.IsUTF32()) {
+      CppCodeGen::GenerateUtf32(fs);
     }
     CppCodeGen::GenerateTraverse(std::move(dfa), fs);
 #ifdef DEBUG
@@ -37,7 +37,7 @@ namespace ZRegex {
     fs << "return 0;";
     fs << "}" << std::endl;
   }
-  void CppCodeGen::GenerateUtf8(std::ofstream &fs) {
+  void CppCodeGen::GenerateUtf32(std::ofstream &fs) {
     fs << "constexpr unsigned clz(unsigned char a) {";
     fs << "  return __builtin_clz(a) - (8 * (sizeof(unsigned) - 1));";
     fs << "}" << std::endl;
@@ -98,7 +98,7 @@ namespace ZRegex {
   void CppCodeGen::GenerateState(const FiniteAutomatonState &state, std::ofstream &fs) {
     fs << "s" << state.id << ": " << std::endl;
     fs << "  if (idx >= n) return false;" << std::endl;
-    if (opts.GetEncoding() == CodegenOpts::DFAEncoding::UTF8) {
+    if (opts.IsUTF32()) {
       fs << " c = nextByte(str, idx);" << std::endl;
     } else {
       fs << "  c = (unsigned int)(unsigned char)str[idx++];" << std::endl;

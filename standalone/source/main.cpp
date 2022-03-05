@@ -10,16 +10,6 @@
 
 using namespace ZRegex;
 
-std::vector<uint8_t> sequential_data(size_t size) {
-  std::vector<uint8_t> ret(size);
-
-  for (size_t i = 0; i < size; ++i) {
-    ret[i] = (uint8_t)(i & size_t(255));
-  }
-
-  return ret;
-}
-
 auto main(int argc, char** argv) -> int {
   spdlog::cfg::load_argv_levels(argc, argv);
 
@@ -36,19 +26,12 @@ auto main(int argc, char** argv) -> int {
   auto backend_type = backend == "cpp" ? CodegenOpts::CodegenBackendType::CPP
                                        : CodegenOpts::CodegenBackendType::LLVM;
   auto optimizationLevel = CodegenOpts::OptimizationLevel::O3;
-  auto sx = std::string(u8"\u0000");
-  auto ex = std::string(u8"\uffff");
-  auto r = UTF8Range(sx, ex);
-  r.PrintRange();
-  while (r.hasNext()) {
-    r.PrintRange();
-  }
-  auto opts = CodegenOpts(backend_type, encoding, optimizationLevel);
+
+  auto opts = CodegenOpts(backend_type, encoding, optimizationLevel, true);
   spdlog::warn("Compiling Pattern {} - Options [Backend={}, Unicode={}]", rgx, backend, !isAscii);
   ZRegex::Codegen code_generator(opts);
   code_generator.Compile(rgx.c_str());
   spdlog::warn("Pattern Compiled {}", rgx);
-  auto d = sequential_data(1024);
 
   std::string s;
   while (getline(std::cin, s)) {

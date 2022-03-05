@@ -2,11 +2,12 @@
 // Created by Mohamed El Zarei on 12/02/2022.
 //
 #include <fa/fa.h>
-#include "helpers/utf8.h"
+
 #include <fstream>
 
-namespace ZRegex {
+#include "helpers/utf8.h"
 
+namespace ZRegex {
 
   /**
    * Setters.
@@ -121,23 +122,24 @@ namespace ZRegex {
         fs << " " << s->id;
         fs << " -> " << t.to->id << "[label=\"";
         if (t.min != t.max) {
-          fs << t.min << "-" << t.max;
+          fs << fmt::format("{:x}", t.min) << "-" << fmt::format("{:x}", t.max);
         } else {
-          fs << t.min;
+          fs << fmt::format("{:x}", t.min);
         }
         fs << "\"]" << std::endl;
       }
     }
     fs << "}" << std::endl;
-    spdlog::info("Dot Visualization of Regex");
-    system("cat /tmp/regex.dot");
+    // spdlog::info("Dot Visualization of Regex");
+    // system("cat /tmp/regex.dot");
   }
   void FiniteAutomaton::RemoveDeadStates() {}
   void FiniteAutomaton::Totalize() {}
   void FiniteAutomaton::Determinize() {
     auto points = GetStartPoints();
     std::list<fa_st> worklist;
-    std::unordered_map<fa_st, std::shared_ptr<FiniteAutomatonState>, FiniteAutomaton::Hasher> new_state;
+    std::unordered_map<fa_st, std::shared_ptr<FiniteAutomatonState>, FiniteAutomaton::Hasher>
+        new_state;
     fa_st initial_set = {initial_state};
     worklist.push_back(initial_set);
 

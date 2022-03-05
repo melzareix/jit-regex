@@ -47,7 +47,7 @@ namespace ZRegex {
 
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error-prone but works for our case here as prototype
-    auto cmd = fmt::format("cd /tmp && clang -std=c++14 -O3 -emit-llvm {}.cpp -o {}.ll -S",
+    auto cmd = fmt::format("cd /tmp && clang-13 -std=c++14 -O3 -emit-llvm {}.cpp -o {}.ll -S",
                            filename, filename);
     auto exit_code = system(cmd.c_str());
     if (exit_code) {
@@ -61,7 +61,7 @@ namespace ZRegex {
   }
   void Codegen::Compile(const char *pattern) {
     if (traverse_ptr != nullptr) return;
-    auto dfa = RegExp::GetAutomatonForPattern(pattern);
+    auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
     spdlog::info("Compiling pattern {}", pattern);
     if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
       GenerateAndCompileCpp(std::move(dfa), "regex");

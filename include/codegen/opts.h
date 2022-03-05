@@ -36,6 +36,10 @@ namespace ZRegex {
 
     CodegenBackendType GetBackendType() const { return backendtype_; };
     DFAEncoding GetEncoding() const { return encoding_; };
+    bool IsByteDFA() { return utf8_byte_dfa_; }
+    bool IsUTF32() { return encoding_ == UTF8 && !IsByteDFA(); }
+    bool IsUTF8() { return IsByteDFA() && encoding_ == UTF8; }
+    bool IsAscii() { return encoding_ == ASCII; }
 
   private:
     CodegenBackendType backendtype_;

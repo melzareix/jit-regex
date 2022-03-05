@@ -11,10 +11,38 @@
 
 #include "fa/fa.h"
 #include "helpers/utf8.h"
+#include "helpers/utf8range.h"
 
+typedef std::vector<std::vector<uint8_t>> utf8_range;
 namespace ZRegex {
   struct FAFactory {
-    static std::unique_ptr<FiniteAutomaton> AnyChar() {
+    static std::unique_ptr<FiniteAutomaton> RangeDFA(std::vector<utf8_range> ranges) {
+      std::vector<std::unique_ptr<FiniteAutomaton>> dfas;
+      for (auto range : ranges) {
+        std::vector<std::unique_ptr<FiniteAutomaton>> range_dfa;
+        for (auto element : range) {
+          // guranteed to have two elements
+          range_dfa.push_back(CharRangeAutomaton(element[0], element[1]));
+        }
+        dfas.push_back(ConcatAll(range_dfa));
+      }
+      return std::move(UnionAll(dfas));
+    }
+
+    static std::unique_ptr<FiniteAutomaton> AnyCharByteDFA() {
+      auto from_u8 = std::string(u8"\u0000");
+      auto to_u8 = std::string(u8"\uffff");
+      auto range_ = UTF8Range(from_u8, to_u8);
+      std::vector<std::vector<std::vector<uint8_t>>> ranges;
+      while (range_.hasNext()) {
+        ranges.push_back(range_.NextRange());
+      }
+      return std::move(FAFactory::RangeDFA(ranges));
+    }
+    static std::unique_ptr<FiniteAutomaton> AnyChar(bool byte_dfa_utf8_ = false) {
+      if (byte_dfa_utf8_) {
+        return AnyCharByteDFA();
+      }
       return FAFactory::CharRangeAutomaton(0, ZRegex::Utf8::MAX_TRANS);
     }
     static std::unique_ptr<FiniteAutomaton> EpsilonAutomaton() {
