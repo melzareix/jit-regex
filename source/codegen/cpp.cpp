@@ -79,7 +79,11 @@ namespace ZRegex {
     fs << "unsigned int idx = 0;" << std::endl;
 
     fs << std::endl;
-    fs << "  unsigned int c;" << std::endl;
+    if (opts.IsUTF32()) {
+      fs << "  unsigned int c;" << std::endl;
+    } else {
+      fs << "  unsigned char c;" << std::endl;
+    }
     auto states = dfa->GetStates();
 
     // Initial State
@@ -101,7 +105,7 @@ namespace ZRegex {
     if (opts.IsUTF32()) {
       fs << " c = nextByte(str, idx);" << std::endl;
     } else {
-      fs << "  c = (unsigned int)(unsigned char)str[idx++];" << std::endl;
+      fs << "  c = str[idx++];" << std::endl;
     }
     for (auto &t : state.transitions) {
       auto goto_accept = t.to->accept;

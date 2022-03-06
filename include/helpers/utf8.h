@@ -11,6 +11,7 @@ namespace ZRegex {
   class Utf8 {
   public:
     static const uint32_t MAX_TRANS = 0xFFFFFFF;
+    static const uint32_t MAX_TRANS_BYTE = 0xFF;
     static uint32_t ReadMultiByteCase(const std::string& reader, char firstByte, unsigned byteLen) {
       switch (byteLen) {
         case 2:
@@ -24,7 +25,6 @@ namespace ZRegex {
           return firstByte;
       }
     }
-
 
     static constexpr unsigned clz(uint8_t a) noexcept {
       return __builtin_clz(a) - (8 * (sizeof(unsigned) - sizeof(uint8_t)));

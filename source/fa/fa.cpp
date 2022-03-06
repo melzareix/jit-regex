@@ -130,9 +130,75 @@ namespace ZRegex {
       }
     }
     fs << "}" << std::endl;
-    // spdlog::info("Dot Visualization of Regex");
-    // system("cat /tmp/regex.dot");
+    spdlog::info("Dot Visualization of Regex");
+    system("cat /tmp/regex.dot");
   }
+  fa_st FiniteAutomaton::GetLiveStates() const {
+    std::unordered_map<FiniteAutomatonState, fa_st, FiniteAutomaton::StateHasher> map;
+    for (auto s : GetStates()) {
+      map[*s] = fa_st();
+    }
+    for (auto s : GetStates()) {
+      for (auto t : s->transitions) {
+        map[*t.to].insert(s);
+      }
+    }
+
+    fa_st live_states = GetAcceptStates();
+    std::list<std::shared_ptr<FiniteAutomatonState>> worklist;
+    for (auto s : live_states) {
+      worklist.push_back(s);
+    }
+    while (!worklist.empty()) {
+      auto s = worklist.front();
+      worklist.pop_front();
+      for (auto p : map[*s]) {
+        if (live_states.find(p) == live_states.end()) {
+          live_states.insert(p);
+          worklist.push_back(p);
+        }
+      }
+    }
+    spdlog::info("{} {}", GetStates().size(), live_states.size());
+
+    return live_states;
+  }
+  void FiniteAutomaton::Reduce() {
+    Visualize();
+    auto states = GetStates();
+    for (auto s : states) {
+      auto st = s->GetSortedTransitions();
+      s->ResetTransitions();
+      uint32_t min = -1, max = -1;
+      std::shared_ptr<FiniteAutomatonState> p;
+      for (auto t : st) {
+        if (p == t.to) {
+          if (t.min <= max + 1) {
+            if (t.max > max) {
+              max = t.max;
+            }
+          } else {
+            if (p != nullptr) {
+              s->AddTransition(min, max, p);
+            }
+            min = t.min;
+            max = t.max;
+          }
+        } else {
+          if (p != nullptr) {
+            s->AddTransition(min, max, p);
+          }
+          p = t.to;
+          min = t.min;
+          max = t.max;
+        }
+      }
+      if (p != nullptr) {
+        s->AddTransition(min, max, p);
+      }
+    }
+  }
+
   void FiniteAutomaton::RemoveDeadStates() {}
   void FiniteAutomaton::Totalize() {}
   void FiniteAutomaton::Determinize() {
@@ -190,7 +256,7 @@ namespace ZRegex {
           if (i + 1 < points.size()) {
             max = points[i + 1] - 1;
           } else {
-            max = Utf8::MAX_TRANS;
+            max = Utf8::MAX_TRANS_BYTE;
           }
 
           r->AddTransition(min, max, q);
@@ -199,6 +265,7 @@ namespace ZRegex {
       iter++;
     }
     this->SetDeterministic(true);
+    this->Reduce();
   }
 
   // Copy Constructor

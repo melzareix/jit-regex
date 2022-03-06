@@ -5,6 +5,7 @@
 #ifndef ZREGEXSTANDALONE_STATE_H
 #define ZREGEXSTANDALONE_STATE_H
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <unordered_set>
@@ -37,16 +38,20 @@ namespace ZRegex {
       transitions.insert(to->transitions.begin(), to->transitions.end());
     }
     void SetAccept(bool acc = true) { accept = acc; }
-
+    void ResetTransitions() { transitions.clear(); }
+    std::vector<FiniteAutomatonTransition> GetSortedTransitions() {
+      std::vector<FiniteAutomatonTransition> results;
+      results.insert(results.end(), transitions.begin(), transitions.end());
+      std::sort(results.begin(), results.end());
+      return results;
+    }
     friend bool operator==(const FiniteAutomatonState& s1, const FiniteAutomatonState& s2);
     friend bool operator<(const FiniteAutomatonState& s1, const FiniteAutomatonState& s2);
 
     [[nodiscard]] size_t Hash() const { return std::hash<uint32_t>()(id); }
 
-    struct HashFunction
-    {
-      size_t operator()(const FiniteAutomatonState& s) const
-      {
+    struct HashFunction {
+      size_t operator()(const FiniteAutomatonState& s) const {
         size_t id_hash = std::hash<uint32_t>()(s.id);
         return id_hash;
       }

@@ -45,11 +45,12 @@ namespace ZRegex {
 
     // Operations
     void Complement();
+    fa_st GetLiveStates() const;
     void RemoveDeadStates();
     void Totalize();
     void Determinize();
     void Visualize() const;
-
+    void Reduce();
     // Hashing
     struct Hasher {
       size_t operator()(const fa_st& V) const {
@@ -59,6 +60,11 @@ namespace ZRegex {
         }
         return hash;
       }
+    };
+
+    // Hashing
+    struct StateHasher {
+      size_t operator()(const FiniteAutomatonState& V) const { return V.Hash(); }
     };
   };
 }  // namespace ZRegex

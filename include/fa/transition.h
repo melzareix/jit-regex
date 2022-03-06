@@ -29,6 +29,7 @@ namespace ZRegex {
       size_t operator()(const FiniteAutomatonTransition& t) const { return t.min * 2 + t.max * 3; }
     };
   };
+  bool operator<(const FiniteAutomatonTransition& t1, const FiniteAutomatonTransition& t2);
 
   bool operator==(const FiniteAutomatonTransition& t1, const FiniteAutomatonTransition& t2) {
     return t1.min == t2.min && t1.max == t2.max && t1.to == t2.to;
