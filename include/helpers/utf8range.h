@@ -154,7 +154,7 @@ namespace ZRegex {
 
           if (r.is_ascii()) {
             auto rr = UTF8SE({r.start, r.end});
-            spdlog::info("{}", rr.Print());
+            spdlog::debug("{}", rr.Print());
             return {rr.GetRange()};
           }
 
@@ -187,7 +187,7 @@ namespace ZRegex {
           for (auto v : rng) {
             result.push_back(v.GetRange());
           }
-          spdlog::info(out);
+          spdlog::debug(out);
           return result;
         }
       }

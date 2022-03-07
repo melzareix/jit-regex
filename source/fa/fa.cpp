@@ -93,7 +93,7 @@ namespace ZRegex {
    * Operations.
    */
   void FiniteAutomaton::Complement() {
-    this->Determinize();
+    this->Determinize(false);
     this->Totalize();
     for (const auto& s : this->GetStates()) {
       s->SetAccept(false);
@@ -130,8 +130,8 @@ namespace ZRegex {
       }
     }
     fs << "}" << std::endl;
-    spdlog::info("Dot Visualization of Regex");
-    system("cat /tmp/regex.dot");
+    spdlog::debug("Dot Visualization of Regex");
+    // system("cat /tmp/regex.dot");
   }
   fa_st FiniteAutomaton::GetLiveStates() const {
     std::unordered_map<FiniteAutomatonState, fa_st, FiniteAutomaton::StateHasher> map;
@@ -159,7 +159,6 @@ namespace ZRegex {
         }
       }
     }
-    spdlog::info("{} {}", GetStates().size(), live_states.size());
 
     return live_states;
   }
@@ -213,7 +212,7 @@ namespace ZRegex {
     Reduce();
   }
   void FiniteAutomaton::Totalize() {}
-  void FiniteAutomaton::Determinize() {
+  void FiniteAutomaton::Determinize(bool byte_dfa_utf8) {
     auto points = GetStartPoints();
     std::list<fa_st> worklist;
     std::unordered_map<fa_st, std::shared_ptr<FiniteAutomatonState>, FiniteAutomaton::Hasher>
@@ -268,7 +267,10 @@ namespace ZRegex {
           if (i + 1 < points.size()) {
             max = points[i + 1] - 1;
           } else {
-            max = Utf8::MAX_TRANS_BYTE;
+            if (byte_dfa_utf8)
+              max = Utf8::MAX_TRANS_BYTE;
+            else
+              max = Utf8::MAX_TRANS;
           }
 
           r->AddTransition(min, max, q);

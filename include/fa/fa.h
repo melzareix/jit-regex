@@ -48,7 +48,7 @@ namespace ZRegex {
     fa_st GetLiveStates() const;
     void RemoveDeadStates();
     void Totalize();
-    void Determinize();
+    void Determinize(bool byte_dfa_utf8);
     void Visualize() const;
     void Reduce();
     // Hashing

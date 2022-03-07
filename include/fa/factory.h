@@ -182,6 +182,19 @@ namespace ZRegex {
 
       return fa;
     }
+    static std::unique_ptr<FiniteAutomaton> ByteAutomaton(const std::string& str) {
+      auto p = std::make_shared<FiniteAutomatonState>();
+      auto fa = std::make_unique<FiniteAutomaton>(p);
+      for (unsigned char c : str) {
+        auto q = std::make_shared<FiniteAutomatonState>();
+        p->AddTransition(c, c, q);
+        p = q;
+      }
+      p->SetAccept();
+      fa->SetDeterministic(true);
+      return fa;
+    }
+
     static std::unique_ptr<FiniteAutomaton> StringAutomaton(const std::string& str) {
       // maybe rename it works with only chars utf8 included now
       auto b1 = str[0];

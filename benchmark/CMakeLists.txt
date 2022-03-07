@@ -37,4 +37,5 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 OUTPUT_NAME "ZR
 
 target_link_libraries(${PROJECT_NAME} benchmark)
 target_link_libraries(${PROJECT_NAME} re2)
+
 target_link_libraries(${PROJECT_NAME} ZRegex::ZRegex)

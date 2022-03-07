@@ -41,6 +41,10 @@ namespace ZRegex {
     bool IsUTF8() { return IsByteDFA() && encoding_ == UTF8; }
     bool IsAscii() { return encoding_ == ASCII; }
 
+    void SetEncoding(const DFAEncoding& encoding) { encoding_ = encoding; }
+    void SetBackendType(const CodegenBackendType& backendType) { backendtype_ = backendType; }
+    void SetByteDFA(const bool& byteDfa) { utf8_byte_dfa_ = byteDfa; }
+
   private:
     CodegenBackendType backendtype_;
     DFAEncoding encoding_;

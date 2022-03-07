@@ -126,10 +126,16 @@ namespace ZRegex {
     };
 
     antlrcpp::Any visitRegularCharacter(RegexParser::RegularCharacterContext *context) override {
+      if (byte_dfa_utf8_) {
+        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
+      }
       return ZRegex::FAFactory::StringAutomaton(context->value->getText());
     }
 
     antlrcpp::Any visitSpecialChar(RegexParser::SpecialCharContext *context) override {
+      if (byte_dfa_utf8_) {
+        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
+      }
       return ZRegex::FAFactory::StringAutomaton(context->value->getText());
     }
 
@@ -162,16 +168,27 @@ namespace ZRegex {
       return std::move(context->character()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
     }
     antlrcpp::Any visitRange(RegexParser::RangeContext *context) override {
-      auto min = std::move(context->min->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
-      auto max = std::move(context->max->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
-
-      auto min_char = *min->initial_state->transitions.begin();
-      auto max_char = *max->initial_state->transitions.begin();
-
       if (!byte_dfa_utf8_) {
+        auto min = std::move(context->min->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+        auto max = std::move(context->max->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+        auto min_char = *min->initial_state->transitions.begin();
+        auto max_char = *max->initial_state->transitions.begin();
+
         return ZRegex::FAFactory::CharRangeAutomaton(min_char.min, max_char.min);
       }
-      auto range_ = UTF8Range(min_char.min, max_char.min);
+      std::string rs = "", re = "";
+      if (context->min->regularCharacter()) {
+        rs = context->min->regularCharacter()->getText();
+      } else if (context->min->specialChar()) {
+        rs = context->min->specialChar()->getText();
+      }
+
+      if (context->max->regularCharacter()) {
+        re = context->max->regularCharacter()->getText();
+      } else if (context->max->specialChar()) {
+        re = context->max->specialChar()->getText();
+      }
+      auto range_ = UTF8Range(rs, re);
       std::vector<std::vector<std::vector<uint8_t>>> ranges;
       while (range_.hasNext()) {
         ranges.push_back(range_.NextRange());
