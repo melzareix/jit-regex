@@ -164,7 +164,6 @@ namespace ZRegex {
     return live_states;
   }
   void FiniteAutomaton::Reduce() {
-    Visualize();
     auto states = GetStates();
     for (auto s : states) {
       auto st = s->GetSortedTransitions();
@@ -199,7 +198,20 @@ namespace ZRegex {
     }
   }
 
-  void FiniteAutomaton::RemoveDeadStates() {}
+  void FiniteAutomaton::RemoveDeadStates() {
+    auto states = GetStates();
+    auto live = GetLiveStates();
+    for (auto s : states) {
+      auto ts = s->transitions;
+      s->ResetTransitions();
+      for (auto t : ts) {
+        if (live.find(t.to) != live.end()) {
+          s->AddTransition(t.min, t.max, t.to);
+        }
+      }
+    }
+    Reduce();
+  }
   void FiniteAutomaton::Totalize() {}
   void FiniteAutomaton::Determinize() {
     auto points = GetStartPoints();
@@ -265,7 +277,7 @@ namespace ZRegex {
       iter++;
     }
     this->SetDeterministic(true);
-    this->Reduce();
+    this->RemoveDeadStates();
   }
 
   // Copy Constructor
