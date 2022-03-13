@@ -7,7 +7,7 @@
 
 #include "fa/fa.h"
 
-//#define DEBUG 1
+// #define DEBUG 1
 namespace ZRegex {
   void CppCodeGen::Generate() {
     std::ofstream fs;
@@ -17,6 +17,7 @@ namespace ZRegex {
     if (opts.IsUTF32()) {
       CppCodeGen::GenerateUtf32(fs);
     }
+    // CppCodeGen::GenerateTraverseWhileLoop(std::move(dfa), fs);
     CppCodeGen::GenerateTraverse(std::move(dfa), fs);
 #ifdef DEBUG
     CppCodeGen::GenerateDebuggingMain(fs);
@@ -73,6 +74,63 @@ namespace ZRegex {
     fs << "  idx += byteLen;";
     fs << "  return c;";
     fs << "}" << std::endl;
+  }
+  void CppCodeGen::GenerateTraverseWhileLoop(std::unique_ptr<FiniteAutomaton> dfa,
+                                             std::ofstream &fs) {
+    fs << "bool traverse(const char* str, unsigned int n) {\n";
+    fs << "unsigned int idx = 0;" << std::endl;
+    fs << "unsigned int state = " << dfa->initial_state->id << ";" << std::endl;
+    auto states = dfa->GetStates();
+
+    fs << "while (idx < n) {" << std::endl;
+    if (opts.IsUTF32()) {
+      fs << "  unsigned int c = nextByte(str, idx);" << std::endl;
+    } else {
+      fs << "  unsigned char c = str[idx++];" << std::endl;
+    }
+    fs << "  switch (state) {" << std::endl;
+    for (const auto &state : states) {
+      // accept state not needed just return true if transition is to one
+      // since we are only interested in matching
+      if (state->accept) continue;
+      CppCodeGen::GenerateStateSwitchStmt(*state, fs);
+    }
+    fs << "    default: return false;" << std::endl;
+    fs << "  }" << std::endl;
+    fs << "}" << std::endl;
+    fs << "  return false;" << std::endl;
+    fs << "}" << std::endl;
+  }
+  void CppCodeGen::GenerateStateSwitchStmt(const FiniteAutomatonState &state, std::ofstream &fs) {
+    bool first = true;
+    fs << "    case " << state.id << ":" << std::endl;
+    for (auto &t : state.transitions) {
+      auto goto_accept = t.to->accept;
+      if (t.min == t.max) {
+        if (!first) {
+          fs << "      else ";
+        }
+        fs << "if (c == " << t.min << ") ";
+        if (goto_accept) {
+          fs << "  return true;" << std::endl;
+        } else {
+          fs << "  state = " << t.to->id << ";" << std::endl;
+        }
+      } else {
+        if (!first) {
+          fs << "      else ";
+        }
+        fs << "if (c >= " << t.min << " && c <= " << t.max << ") ";
+        if (goto_accept) {
+          fs << "  return true;" << std::endl;
+        } else {
+          fs << "  state = " << t.to->id << ";" << std::endl;
+        }
+      }
+      first = false;
+    }
+    fs << "      else return false;" << std::endl;
+    fs << "      break;" << std::endl;
   }
   void CppCodeGen::GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream &fs) {
     fs << "bool traverse(const char* str, unsigned int n) {";

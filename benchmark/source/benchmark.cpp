@@ -11,6 +11,7 @@
 #include <regex>
 #include <sstream>
 
+#include "fa/special/kmp.h"
 #include "spdlog/cfg/argv.h"
 #include "spdlog/pattern_formatter.h"
 
@@ -19,7 +20,8 @@
 #define DFA_CPP_U8 2
 #define DFA_CPP_U32 3
 #define RE2_TYPE 4
-#define STDRGX 5
+#define KMP_TYPE 5
+#define STDRGX 6
 
 #define INIT                                        \
   std::ifstream st(dataset, std::ios_base::binary); \
@@ -36,6 +38,8 @@
     state.SetLabel("DFA CPP U32");             \
   } else if (state.range(0) == RE2_TYPE) {     \
     state.SetLabel("RE2");                     \
+  } else if (state.range(0) == KMP_TYPE) {     \
+    state.SetLabel("KMP Interpretted");        \
   } else if (state.range(0) == STDRGX) {       \
     state.SetLabel("Standard Library Regex");  \
   }
@@ -117,6 +121,12 @@ static void BENCH_ALL(benchmark::State& state, const std::string& pattern, const
       }
     }
 
+  } else if (state.range(0) == KMP_TYPE) {
+    ZRegex::KMPAlgorithm kmp(pattern);
+    for (auto _ : state) {
+      benchmark::DoNotOptimize(matches = kmp.Search(content));
+    }
+
   } else {
     if (state.range(0) == DFA_LLVM_U8) {
       opts.SetByteDFA(true);
@@ -168,6 +178,13 @@ static void BENCH_LINE(benchmark::State& state, const std::string& pattern, cons
       }
     }
 
+  } else if (state.range(0) == KMP_TYPE) {
+    ZRegex::KMPAlgorithm kmp(pattern);
+    for (auto _ : state) {
+      while (getline(st, line)) {
+        benchmark::DoNotOptimize(matches += kmp.Search(line));
+      }
+    }
   } else {
     if (state.range(0) == DFA_LLVM_U8) {
       opts.SetByteDFA(true);
@@ -197,22 +214,32 @@ static void BENCH_LINE(benchmark::State& state, const std::string& pattern, cons
 
   state.counters["Matches"] = matches;
 }
+// BENCHMARK_CAPTURE(BENCH_LINE, u8"UTF8, p=Twain|twain", u8"Twain|twain" /*pattern*/,
+//                   true /*partial*/, ZRegex::CodegenOpts() /*encoding*/,
+//                   "/home/elzarei/bench_data/3200.txt")
+//     ->DenseRange(DFA_LLVM_U8, RE2_TYPE);
+// BENCHMARK_CAPTURE(BENCH_LINE, u8"UTF8, p=[a-zA-Z0-9\\_]+nn", u8"[a-zA-Z0-9\\_]+nn" /*pattern*/,
+//                   true /*partial*/, ZRegex::CodegenOpts() /*encoding*/,
+//                   "/home/elzarei/bench_data/3200.txt")
+//     ->DenseRange(DFA_LLVM_U8, RE2_TYPE);
+
 // BENCHMARK_CAPTURE(BENCH_ALL, u8"UTF8, p=💙", u8"💙" /*pattern*/, true /*partial*/,
 //                   ZRegex::CodegenOpts() /*encoding*/, u8"💙" /*append*/,
+//                   "/home/elzarei/bench_data/unicode_100mb.txt")
+//     ->DenseRange(DFA_LLVM_U8, KMP_TYPE)
+//     ->Unit(benchmark::kMillisecond);
+
+// BENCHMARK_CAPTURE(BENCH_ALL, u8"UTF8, p=💙{2,5}", u8"💙{2,5}" /*pattern*/, true /*partial*/,
+//                   ZRegex::CodegenOpts() /*encoding*/, u8"💙💙💙💙" /*append*/,
 //                   "/home/elzarei/bench_data/unicode_100mb.txt")
 //     ->DenseRange(DFA_LLVM_U8, RE2_TYPE)
 //     ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_CAPTURE(BENCH_ALL, u8"UTF8, p=💙{2,5}", u8"💙{2,5}" /*pattern*/, true /*partial*/,
-                  ZRegex::CodegenOpts() /*encoding*/, u8"💙💙💙💙" /*append*/,
-                  "/home/elzarei/bench_data/unicode_100mb.txt")
-    ->DenseRange(DFA_LLVM_U8, RE2_TYPE)
-    ->Unit(benchmark::kMillisecond);
-
-// BENCHMARK_CAPTURE(BENCH_LINE, u8"UTF8, p=ä", u8"ä" /*pattern*/, true /*partial*/,
+// BENCHMARK_CAPTURE(BENCH_LINE, u8"UTF8, p=ä{2,3}", u8"ä" /*pattern*/, true /*partial*/,
 //                   ZRegex::CodegenOpts() /*encoding*/,
 //                   "/home/elzarei/bench_data/unicode_100mb.txt")
-//     ->DenseRange(DFA_LLVM_U8, RE2_TYPE);
+//     ->DenseRange(DFA_LLVM_U8, KMP_TYPE);
+
 // BENCHMARK_CAPTURE(BENCH_LINE, u8"Unicode, p=ä{1,4}", u8"ä{1,4}" /*pattern*/, true /*partial*/,
 //                   ZRegex::CodegenOpts() /*encoding*/,
 //                   "/home/elzarei/bench_data/unicode_100mb.txt")
@@ -222,6 +249,10 @@ BENCHMARK_CAPTURE(BENCH_ALL, u8"UTF8, p=💙{2,5}", u8"💙{2,5}" /*pattern*/, t
 //                   "/home/elzarei/bench_data/unicode_100mb.txt")
 //     ->DenseRange(DFA_LLVM_U8, RE2_TYPE);
 
+BENCHMARK_CAPTURE(BENCH_LINE, u8"UTF8, p=ä{50,55}", u8"ä{50,55}" /*pattern*/, true /*partial*/,
+                  ZRegex::CodegenOpts() /*encoding*/, "/home/elzarei/bench_data/bad_case.txt")
+    ->DenseRange(DFA_LLVM_U8, RE2_TYPE)
+    ->Unit(benchmark::kMillisecond);
 int main(int argc, char** argv) {
   ::benchmark::Initialize(&argc, argv);
   spdlog::cfg::load_argv_levels(argc, argv);
