@@ -26,6 +26,7 @@ Qmark: '?';
 OpenBrace: '{';
 CloseBrace: '}';
 Comma: ',';
+Newline: 'n';
 EscapeChar: '\\';
 LETTER: UnicodeLetter;
 
@@ -79,10 +80,11 @@ predefinedClassName:
 	| value = 'WHITESPACE';
 
 // regularCharacter: value = LETTER | value = INT;
-regularCharacter: value = LETTER | value=INT;
+regularCharacter: value = LETTER | value = INT;
 specialChar:
 	value = Asterisk
 	| value = Plus
+	| value = Newline
 	| value = Qmark
 	| value = CharacterClassStart
 	| value = CharacterClassEnd
@@ -98,9 +100,8 @@ specialChar:
 	| value = EscapeChar;
 
 fragment Digit: [0-9];
-// fragment UnicodeLetter: [\p{Alnum}];
-//fragment UnicodeLetter: [\p{L}\p{M}*];
-//fragment UnicodeLetter: [\p{Emoji}];
+// fragment UnicodeLetter: [\p{Alnum}]; fragment UnicodeLetter: [\p{L}\p{M}*]; fragment
+// UnicodeLetter: [\p{Emoji}];
 fragment UnicodeLetter: [\u{00000}-\u{1FFFF}];
 fragment LetterOrDigit: Letter | [0-9];
 fragment Letter: [a-zA-Z];

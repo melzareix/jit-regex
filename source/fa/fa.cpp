@@ -213,6 +213,7 @@ namespace ZRegex {
   }
   void FiniteAutomaton::Totalize() {}
   void FiniteAutomaton::Determinize(bool byte_dfa_utf8) {
+    if (this->deterministic) return;
     auto points = GetStartPoints();
     std::list<fa_st> worklist;
     std::unordered_map<fa_st, std::shared_ptr<FiniteAutomatonState>, FiniteAutomaton::Hasher>

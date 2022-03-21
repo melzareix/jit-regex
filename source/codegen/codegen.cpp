@@ -6,6 +6,7 @@
 
 #include <codegen/cpp.h>
 #include <codegen/llvm.h>
+#include <fa/special/kmp.h>
 
 namespace ZRegex {
   void Codegen::JIT_cpp() {
@@ -59,6 +60,18 @@ namespace ZRegex {
     llvm.Generate(std::move(dfa));
     module = llvm.TakeModule();
   }
+  void Codegen::CompileKMP(const char *pattern) {
+    if (traverse_ptr != nullptr) return;
+    auto kmp = ZRegex::KMPAlgorithm(pattern);
+    auto dfa = kmp.asDfa();
+    if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
+      GenerateAndCompileCpp(std::move(dfa), "regex");
+    } else {
+      GenerateAndCompileLLVM(std::move(dfa));
+    }
+    JIT();
+  }
+
   void Codegen::Compile(const char *pattern) {
     if (traverse_ptr != nullptr) return;
     auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());

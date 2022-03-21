@@ -49,6 +49,7 @@ namespace ZRegex {
     }
 
     void Compile(const char* pattern);
+    void CompileKMP(const char* pattern);
     bool Run(const char* pattern);
   };
 }  // namespace ZRegex

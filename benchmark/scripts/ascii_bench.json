@@ -1,21 +1,35 @@
 {
   "Suites": [
     {
-      "name": "Unicode",
-      "tests": [
-        {
-          "pattern": "ä",
-          "dataset": "unicode_100mb.txt"
-        },
-        {
-          "pattern": "ä{1,4}",
-          "dataset": "unicode_100mb.txt"
-        },
-        {
-          "pattern": "([äTȧ]){2,5}",
-          "dataset": "unicode_100mb.txt"
-        }
-      ]
+      "name": "tpch",
+      "dataset": "/home/elzarei/tpch-data/out/lineitem.tbl.csv.txt",
+      "patterns": ["ular"]
+    },
+    {
+      "name": "bad_case_simple",
+      "dataset": "/home/elzarei/bench_data/bad_case.txt",
+      "libraries": ["re2", "dfa", "kmp"],
+      "timescale": "us",
+      "patterns": ["ßääääääääääääääääääääääääääääääääääääääääääääääääää"]
+    },
+    {
+      "name": "tpchpart",
+      "dataset": "/home/elzarei/tpch-data/out/part.tbl.csv.txt",
+      "timescale": "us",
+      "patterns": ["epo"]
+    },
+    {
+      "name": "regex_dna",
+      "dataset": "/home/elzarei/jit-regex/benchmark/data/regexdna.txt",
+      "timescale": "us",
+      "patterns": ["agggtaaa|tttaccct", "[cgt]gggtaaa|tttaccc[acg]", "a[act]ggtaaa|tttacc[agt]t", "agg[act]taaa|ttta[agt]cct", "aggg[acg]aaa|ttt[cgt]ccct", "agggtaa[cgt]|[acg]ttaccct", "agggta[cgt]a|t[acg]taccct", "agggt[cgt]aa|tt[acg]accct", "ag[act]gtaaa|tttac[agt]ct"]
+    },
+    {
+      "name": "bad_case",
+      "dataset": "/home/elzarei/bench_data/bad_case.txt",
+      "libraries": ["re2", "dfa"],
+      "timescale": "ms",
+      "patterns": ["ä", "ä{1,5}", "ä{50,55}", "ä{56,}", "ßä{50}"]
     }
   ]
 }

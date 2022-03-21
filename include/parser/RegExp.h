@@ -9,6 +9,10 @@
 
 class RegExp {
 public:
+  static bool string_is_valid(const std::string& str) {
+    return find_if(str.begin(), str.end(), [](char c) { return !(isalnum(c) || (c == ' ')); })
+           == str.end();
+  }
   static std::unique_ptr<ZRegex::FiniteAutomaton> GetAutomatonForPattern(const std::string& pattern,
                                                                          bool byte_dfa_utf8
                                                                          = false) {
@@ -20,7 +24,7 @@ public:
     ZRegex::RegExpVisitor regexVisitor(byte_dfa_utf8);
     auto fa = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
     fa->Determinize(byte_dfa_utf8);
-    fa->Visualize();
+    // fa->Visualize();
     return std::move(fa);
   }
 };

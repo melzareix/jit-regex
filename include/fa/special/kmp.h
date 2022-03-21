@@ -20,34 +20,74 @@
  */
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
+
+#include "fa/fa.h"
 
 namespace ZRegex {
   class KMPAlgorithm {
   private:
     std::vector<uint32_t> table;
     const std::string pattern_;
+
+  public:
+    KMPAlgorithm(const std::string& pattern) : pattern_(pattern) {}
     void BuildTable() {
+      table.resize(pattern_.size(), 0);
       for (int i = 1, k = 0; i < pattern_.size(); ++i) {
         while (k && pattern_[k] != pattern_[i]) k = table[k - 1];
         if (pattern_[k] == pattern_[i]) ++k;
         table[i] = k;
       }
     }
+    std::unique_ptr<FiniteAutomaton> asDfa() {
+      // dfa as array
+      auto m = pattern_.size();
+      std::vector<std::vector<uint32_t>> dfa(m, std::vector<uint32_t>(256));
+      dfa[0][(unsigned char)pattern_[0]] = 1;
 
-  public:
-    KMPAlgorithm(const std::string& pattern) : pattern_(pattern) {
-      table.resize(pattern.size(), 0);
-      BuildTable();
+      for (uint32_t x = 0, j = 1; j < m; j++) {
+        for (uint32_t c = 0; c < 256; c++) {
+          dfa[j][c] = dfa[x][c];
+        }
+        dfa[j][(unsigned char)pattern_[j]] = j + 1;
+        x = dfa[x][(unsigned char)pattern_[j]];
+      }
+
+      // convert to dfa obj
+      std::vector<std::shared_ptr<FiniteAutomatonState>> states(pattern_.size() + 1);
+      for (size_t i = 0; i < states.size(); i++) {
+        states[i] = std::make_shared<FiniteAutomatonState>();
+      }
+      auto fa = std::make_unique<FiniteAutomaton>(states[0]);
+      for (uint32_t j = 0; j < m; j++) {
+        for (uint32_t c = 0; c < 256; c++) {
+          // if (dfa[j][c] == 0) continue;
+          // if (pattern_.find((char)c) == std::string::npos) continue;
+          states[j]->AddTransition(c, c, states[dfa[j][c]]);
+        }
+      }
+      fa->SetDeterministic(true);
+      states[m]->SetAccept(true);
+      auto as = fa->GetAcceptStates();
+      fa->RemoveDeadStates();
+      // fa->Visualize();
+      return std::move(fa);
     }
     uint8_t Search(const std::string& haystack) {
+      uint8_t num_matches = 0;
       for (int i = 0, k = 0; i < haystack.size(); ++i) {
         while (k && pattern_[k] != haystack[i]) k = table[k - 1];
         if (pattern_[k] == haystack[i]) ++k;
-        if (k == pattern_.size()) return 1;
+        if (k == pattern_.size()) {
+          return 1;  // single match only
+          num_matches++;
+          k = table[k - 1];
+        }
       }
-      return 0;
+      return num_matches;
     }
   };
 }  // namespace ZRegex

@@ -134,6 +134,9 @@ namespace ZRegex {
 
     antlrcpp::Any visitSpecialChar(RegexParser::SpecialCharContext *context) override {
       if (byte_dfa_utf8_) {
+        if (context->value->getText() == "n") {
+          return ZRegex::FAFactory::ByteAutomaton("\n");
+        }
         return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
       }
       return ZRegex::FAFactory::StringAutomaton(context->value->getText());

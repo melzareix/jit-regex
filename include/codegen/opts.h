@@ -28,7 +28,7 @@ namespace ZRegex {
     enum OptimizationLevel { O1, O2, O3 };
     enum AutomatonType { DFA, PARABIX };
     CodegenOpts(const CodegenBackendType& backendtype = LLVM, const DFAEncoding& encoding = UTF8,
-                const OptimizationLevel& olevel = O2, const bool& utf8_byte_dfa = false)
+                const OptimizationLevel& olevel = O3, const bool& utf8_byte_dfa = false)
         : backendtype_(backendtype),
           encoding_(encoding),
           optimization_level_(olevel),

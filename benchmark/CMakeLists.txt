@@ -25,6 +25,15 @@ CPMAddPackage(
         OPTIONS "BENCHMARK_ENABLE_TESTING NO"
 )
 
+#boost-regex
+CPMAddPackage(
+  NAME boost
+  VERSION 1.78.0
+  GITHUB_REPOSITORY "boostorg/regex"
+  GIT_TAG "boost-1.78.0"
+  OPTIONS "BOOST_REGEX_STANDALONE TRUE"
+)
+
 CPMAddPackage(NAME ZRegex SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # ---- Create standalone executable ----
@@ -35,6 +44,7 @@ add_executable(${PROJECT_NAME} ${sources})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 OUTPUT_NAME "ZRegex_BM")
 
+target_link_libraries(${PROJECT_NAME} boost_regex)
 target_link_libraries(${PROJECT_NAME} benchmark)
 target_link_libraries(${PROJECT_NAME} re2)
 
