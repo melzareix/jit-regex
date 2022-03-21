@@ -53,7 +53,9 @@ def gen_dfa(ds, pattern, timescale="ns"):
     return r + ";\n"
 
 
-def gen_re2(ds, pattern, timescale="ns"):
+def gen_re2(ds, pattern: str, timescale="ns"):
+    pattern = pattern.replace("%", ".*")
+    print(pattern)
     r = f'BENCHMARK_CAPTURE(BENCH_RE2, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
     if timescale != "ns":
         if timescale == "ms":
@@ -101,7 +103,7 @@ def main(file: str):
             suite["name"],
             suite["dataset"],
             suite.get("timescale", "ns"),
-            suite.get("libraries", ["re2", "dfa", "boost", "kmp"]),
+            suite.get("libraries", ["re2", "dfa", "boost", "kmp", "simd"]),
         )
         ds_name = f"DS_{name.upper()}"
         with open(f"../source/suites/{name}.hpp", "w") as f:

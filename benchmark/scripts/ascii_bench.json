@@ -1,9 +1,15 @@
 {
   "Suites": [
     {
-      "name": "tpch",
+      "name": "tpchlineitem",
       "dataset": "/home/elzarei/tpch-data/out/lineitem.tbl.csv.txt",
       "patterns": ["ular"]
+    },
+    {
+      "name": "tpchorders",
+      "dataset": "/home/elzarei/tpch-data/out/orders.tbl.csv.txt",
+      "libraries": ["re2", "dfa"],
+      "patterns": ["special%packages"]
     },
     {
       "name": "bad_case_simple",

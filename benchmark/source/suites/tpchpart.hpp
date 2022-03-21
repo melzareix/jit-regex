@@ -5,4 +5,5 @@ BENCHMARK_CAPTURE(BENCH_DFA, u8"p=epo", u8"epo", ZRegex::CodegenOpts() /*encodin
 BENCHMARK_CAPTURE(BENCH_BOOST, u8"p=epo", u8"epo", ZRegex::CodegenOpts() /*encoding*/, DS_TPCHPART)->Unit(benchmark::kMicrosecond);
 BENCHMARK_CAPTURE(BENCH_KMP_DFA, u8"p=epo", u8"epo", ZRegex::CodegenOpts() /*encoding*/, DS_TPCHPART)->DenseRange(KMP_TYPE_LLVM, KMP_TYPE_CPP)->Unit(benchmark::kMicrosecond);
 BENCHMARK_CAPTURE(BENCH_KMP_INTERPRETTED, u8"p=epo", u8"epo", ZRegex::CodegenOpts() /*encoding*/, DS_TPCHPART)->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BENCH_SIMD_INTERPRETTED, u8"p=epo", u8"epo", ZRegex::CodegenOpts() /*encoding*/, DS_TPCHPART)->Unit(benchmark::kMicrosecond);
 
