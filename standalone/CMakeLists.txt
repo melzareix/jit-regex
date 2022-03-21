@@ -18,6 +18,21 @@ CPMAddPackage(
 
 CPMAddPackage(NAME ZRegex SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
 
+INCLUDE(../cmake/sse/FindSSE.cmake)
+FindSSE()
+IF(SSE3_FOUND)
+    IF(SSSE3_FOUND)
+            SET(CXX_DFLAGS -msse3 -mssse3)
+    ENDIF(SSSE3_FOUND)
+ENDIF(SSE3_FOUND)
+
+IF(SSE4_1_FOUND)
+        message("found sse4_2")
+        SET(CMAKE_C_FLAGS -msse4.1 -mpopcnt)
+        SET(CXX_DFLAGS -msse4.1 -mpopcnt)
+ENDIF(SSE4_2_FOUND)
+ADD_DEFINITIONS(${CXX_DFLAGS})
+
 # ---- Create standalone executable ----
 
 file(GLOB sources CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)

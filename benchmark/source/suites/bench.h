@@ -32,6 +32,7 @@
 #include <sstream>
 
 #include "fa/special/kmp.h"
+#include "fa/special/simd.h"
 #include "spdlog/cfg/argv.h"
 #include "spdlog/pattern_formatter.h"
 
@@ -45,32 +46,35 @@
 #define KMP_INTERPRETTED 7
 #define BOOSTRGX 8
 #define STDRGX 9
+#define SIMD_SSE42_INTERPRETTED 10
 
 #define INIT                                        \
   std::ifstream st(dataset, std::ios_base::binary); \
   double matches = 0;
 
-#define LABEL                                      \
-  if (state.range(0) == DFA_LLVM_U8) {             \
-    state.SetLabel("DFA LLVM U8");                 \
-  } else if (state.range(0) == DFA_LLVM_U32) {     \
-    state.SetLabel("DFA LLVM U32");                \
-  } else if (state.range(0) == DFA_CPP_U8) {       \
-    state.SetLabel("DFA CPP U8");                  \
-  } else if (state.range(0) == DFA_CPP_U32) {      \
-    state.SetLabel("DFA CPP U32");                 \
-  } else if (state.range(0) == RE2_TYPE) {         \
-    state.SetLabel("RE2");                         \
-  } else if (state.range(0) == KMP_TYPE_LLVM) {    \
-    state.SetLabel("KMP LLVM");                    \
-  } else if (state.range(0) == KMP_INTERPRETTED) { \
-    state.SetLabel("KMP INTERPRETTED");            \
-  } else if (state.range(0) == KMP_TYPE_CPP) {     \
-    state.SetLabel("KMP CPP");                     \
-  } else if (state.range(0) == BOOSTRGX) {         \
-    state.SetLabel("Boost Regex");                 \
-  } else if (state.range(0) == STDRGX) {           \
-    state.SetLabel("Standard Library Regex");      \
+#define LABEL                                             \
+  if (state.range(0) == DFA_LLVM_U8) {                    \
+    state.SetLabel("DFA LLVM U8");                        \
+  } else if (state.range(0) == DFA_LLVM_U32) {            \
+    state.SetLabel("DFA LLVM U32");                       \
+  } else if (state.range(0) == DFA_CPP_U8) {              \
+    state.SetLabel("DFA CPP U8");                         \
+  } else if (state.range(0) == DFA_CPP_U32) {             \
+    state.SetLabel("DFA CPP U32");                        \
+  } else if (state.range(0) == RE2_TYPE) {                \
+    state.SetLabel("RE2");                                \
+  } else if (state.range(0) == KMP_TYPE_LLVM) {           \
+    state.SetLabel("KMP LLVM");                           \
+  } else if (state.range(0) == KMP_INTERPRETTED) {        \
+    state.SetLabel("KMP INTERPRETTED");                   \
+  } else if (state.range(0) == KMP_TYPE_CPP) {            \
+    state.SetLabel("KMP CPP");                            \
+  } else if (state.range(0) == SIMD_SSE42_INTERPRETTED) { \
+    state.SetLabel("SIMD INTERPRETTED");                  \
+  } else if (state.range(0) == BOOSTRGX) {                \
+    state.SetLabel("Boost Regex");                        \
+  } else if (state.range(0) == STDRGX) {                  \
+    state.SetLabel("Standard Library Regex");             \
   }
 
 #define LOAD_DATA             \
@@ -134,6 +138,19 @@ static void BENCH_RE2(benchmark::State& state, const std::string& pattern,
     if (p == nullptr) p = new re2::RE2(pattern, re2_enc);
     while (getline(st, line)) {
       benchmark::DoNotOptimize(matches += re2::RE2::PartialMatch(line, *p));
+    }
+  }
+  state.counters["Matches"] = matches;
+}
+
+static void BENCH_SIMD_INTERPRETTED(benchmark::State& state, const std::string& pattern,
+                                    ZRegex::CodegenOpts&& opts, const std::string& dataset) {
+  INIT;
+  state.SetLabel("SIMD INTERPRETTED");
+  std::string line;
+  for (auto _ : state) {
+    while (getline(st, line)) {
+      benchmark::DoNotOptimize(matches += ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(line.c_str(), line.size(), pattern.c_str(), pattern.size()));
     }
   }
   state.counters["Matches"] = matches;

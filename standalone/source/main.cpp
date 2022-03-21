@@ -4,6 +4,7 @@
 
 #include "cxxopts.hpp"
 #include "fa/special/kmp.h"
+#include "fa/special/simd.h"
 #include "helpers/utf8.h"
 #include "helpers/utf8range.h"
 #include "spdlog/cfg/argv.h"
@@ -37,11 +38,12 @@ auto main(int argc, char** argv) -> int {
   spdlog::warn("Pattern Compiled {}", rgx);
 
   std::string s;
-  KMPAlgorithm algo(rgx);
+
   while (getline(std::cin, s)) {
     auto z = s.c_str();
     spdlog::debug("Run Result : {}", code_generator.Run(z));
-    spdlog::debug("KMP Result : {}", algo.Search(z));
+    auto r = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(z, s.size(), rgx.c_str(), rgx.size());
+    spdlog::info("{}", r);
   }
 
   return 0;

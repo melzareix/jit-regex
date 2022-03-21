@@ -1,8 +1,8 @@
-#include "suites/bad_case.hpp"
+// #include "suites/bad_case.hpp"
 #include "suites/bad_case_simple.hpp"
-#include "suites/regex_dna.hpp"
-#include "suites/tpch.hpp"
-#include "suites/tpchpart.hpp"
+// #include "suites/regex_dna.hpp"
+// #include "suites/tpch.hpp"
+// #include "suites/tpchpart.hpp"
 
 int main(int argc, char** argv) {
   ::benchmark::Initialize(&argc, argv);

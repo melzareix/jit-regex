@@ -46,6 +46,8 @@ CPMAddPackage(
         OPTIONS "SPDLOG_INSTALL YES" # create an installable target
 )
 
+# SET (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # json
 #CPMAddPackage("gh:nlohmann/json@3.9.1")
 
@@ -56,6 +58,7 @@ CPMAddPackage(
 #        GITHUB_REPOSITORY google/benchmark
 #        OPTIONS "BENCHMARK_ENABLE_TESTING NO"
 #)
+
 
 set(CXX_STANDARD 17)
 #antlr4 parser

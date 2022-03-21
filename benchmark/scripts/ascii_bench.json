@@ -8,7 +8,7 @@
     {
       "name": "bad_case_simple",
       "dataset": "/home/elzarei/bench_data/bad_case.txt",
-      "libraries": ["re2", "dfa", "kmp"],
+      "libraries": ["simd", "re2", "dfa", "kmp"],
       "timescale": "us",
       "patterns": ["ßääääääääääääääääääääääääääääääääääääääääääääääääää"]
     },
