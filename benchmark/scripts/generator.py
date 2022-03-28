@@ -13,6 +13,16 @@ def generate_main():
     """
 
 
+def gen_simd_multi(ds, pattern, timescale="ns"):
+    r = f'BENCHMARK_CAPTURE(BENCH_SIMD_MULTIPATTERN, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
+    if timescale != "ns":
+        if timescale == "ms":
+            r += "->Unit(benchmark::kMillisecond)"
+        elif timescale == "us":
+            r += "->Unit(benchmark::kMicrosecond)"
+    return r + ";\n"
+
+
 def gen_simd(ds, pattern, timescale="ns"):
     r = f'BENCHMARK_CAPTURE(BENCH_SIMD_INTERPRETTED, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
     if timescale != "ns":
@@ -86,6 +96,8 @@ def generate_fn(ds: str, timescale: str, libraries: str, pattern: str):
             result += gen_dfa(ds, pattern, timescale)
         elif lib == "kmp":
             result += gen_kmp(ds, pattern, timescale)
+        elif lib == "simd_multi":
+            result += gen_simd_multi(ds, pattern, timescale)
         elif lib == "simd":
             result += gen_simd(ds, pattern, timescale)
         else:

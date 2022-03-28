@@ -46,8 +46,8 @@ ENDIF(SSE3_FOUND)
 
 IF(SSE4_1_FOUND)
         message("found sse4_2")
-        SET(CMAKE_C_FLAGS -msse4.1 -mpopcnt)
-        SET(CXX_DFLAGS -msse4.1 -mpopcnt)
+        SET(CMAKE_C_FLAGS -march=native)
+        SET(CXX_DFLAGS -march=native)
 ENDIF(SSE4_2_FOUND)
 ADD_DEFINITIONS(${CXX_DFLAGS})
 

@@ -75,7 +75,7 @@ namespace ZRegex {
   void Codegen::Compile(const char *pattern) {
     if (traverse_ptr != nullptr) return;
     auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
-    // dfa->Visualize();
+    dfa->Visualize();
     spdlog::info("Compiling pattern {}", pattern);
     if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
       GenerateAndCompileCpp(std::move(dfa), "regex");

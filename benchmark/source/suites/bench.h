@@ -95,6 +95,58 @@
     result = pattern;                                                            \
   }
 
+static std::vector<std::string> SplitString(std::string str, std::string delimeter) {
+  std::vector<std::string> splittedStrings = {};
+  size_t pos = 0;
+
+  while ((pos = str.find(delimeter)) != std::string::npos) {
+    std::string token = str.substr(0, pos);
+    if (token.length() > 0) splittedStrings.push_back(token);
+    str.erase(0, pos + delimeter.length());
+  }
+
+  if (str.length() > 0) splittedStrings.push_back(str);
+  return splittedStrings;
+}
+
+// TODO MORE THAN 2 PATTERNS
+static void BENCH_SIMD_EPSM(benchmark::State& state, const std::string& pattern,
+                            ZRegex::CodegenOpts&& opts, const std::string& dataset) {
+  INIT;
+  std::string line;
+  // assert(pattern.size() <= 32);  // only good if pattern length is small
+  state.SetLabel("SIMD EPSMA Regex");
+  auto barr = ZRegex::SIMDSubstringMatch::preprocess(pattern.c_str(), pattern.size());
+  auto pcstr = pattern.c_str();
+  auto m = pattern.size();
+  for (auto _ : state) {
+    while (getline(st, line)) {
+      benchmark::DoNotOptimize(
+          matches += ZRegex::SIMDSubstringMatch::epsm_a(pcstr, m, line.c_str(), line.size(), barr));
+    }
+  }
+  state.counters["Matches"] = matches;
+}
+
+// TODO MORE THAN 2 PATTERNS
+static void BENCH_SIMD_MULTIPATTERN(benchmark::State& state, const std::string& pattern,
+                                    ZRegex::CodegenOpts&& opts, const std::string& dataset) {
+  INIT;
+  std::string line;
+  state.SetLabel("SIMD MULTIPATTERN Regex");
+  auto patterns = SplitString(pattern, "%");
+  for (auto _ : state) {
+    while (getline(st, line)) {
+      auto p1 = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(
+          line.c_str(), line.size(), patterns[0].c_str(), patterns[0].size());
+      auto p2 = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(
+          line.c_str(), line.size(), patterns[1].c_str(), patterns[1].size());
+      if (p1 != std::string::npos && p2 != std::string::npos && p2 >= p1) matches += 1;
+    }
+  }
+  state.counters["Matches"] = matches;
+}
+
 static void BENCH_BOOST(benchmark::State& state, const std::string& pattern,
                         ZRegex::CodegenOpts&& opts, const std::string& dataset) {
   INIT;
@@ -150,7 +202,8 @@ static void BENCH_SIMD_INTERPRETTED(benchmark::State& state, const std::string& 
   std::string line;
   for (auto _ : state) {
     while (getline(st, line)) {
-      benchmark::DoNotOptimize(matches += ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(line.c_str(), line.size(), pattern.c_str(), pattern.size()));
+      benchmark::DoNotOptimize(matches += (ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(
+                                   line.c_str(), line.size(), pattern.c_str(), pattern.size())));
     }
   }
   state.counters["Matches"] = matches;

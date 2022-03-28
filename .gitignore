@@ -9,3 +9,4 @@ cmake-build-release
 !/include/parser/grammar/Regex.g4
 CMakeFiles
 CMakeCache.txt
+logs

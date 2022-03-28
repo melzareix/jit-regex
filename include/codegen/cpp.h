@@ -20,6 +20,8 @@ namespace ZRegex {
         : opts(opts), dfa(std::move(dfa)), filename(filename){};
     void Generate();
 
+    // void GenerateSimd();
+
   private:
     CodegenOpts opts;
     std::unique_ptr<FiniteAutomaton> dfa;

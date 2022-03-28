@@ -9,6 +9,16 @@
 
 // #define DEBUG 1
 namespace ZRegex {
+  // void CppCodeGen::GenerateSimd(const std::string &&simd_filename) {
+  //   std::ofstream fs;
+  //   // file is temporary compiled
+  //   auto fp = fmt::format("/tmp/{}.cpp", simd_filename);
+  //   fs.open(fp);
+  //   if (opts.IsUTF32()) {
+  //     CppCodeGen::GenerateUtf32(fs);
+  //   }
+  // }
+
   void CppCodeGen::Generate() {
     std::ofstream fs;
     // file is temporary compiled

@@ -8,7 +8,7 @@
     {
       "name": "tpchorders",
       "dataset": "/home/elzarei/tpch-data/out/orders.tbl.csv.txt",
-      "libraries": ["re2", "dfa"],
+      "libraries": ["re2", "dfa", "simd_multi"],
       "patterns": ["special%packages"]
     },
     {

@@ -38,11 +38,23 @@ auto main(int argc, char** argv) -> int {
   spdlog::warn("Pattern Compiled {}", rgx);
 
   std::string s;
+  // std::string p = "ab";
+  // std::string sx = "aaaaaaaaaaaaaaaaaaaaaaxlaaaaaaaaaaaaaaaaaaaaaaabx";
 
+  // auto haystack = sx.c_str(), needle = p.c_str();
+  // auto barr = ZRegex::SIMDSubstringMatch::preprocess(needle, p.size());
+  // auto r = ZRegex::SIMDSubstringMatch::epsm_a(needle, p.size(), haystack, sx.size(), barr);
+  // ZRegex::SIMDSubstringMatch::clean_b(barr, p.size());
+  // ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(sx, 10, p, 5);
+
+  auto needle = rgx.c_str();
+  auto barr = ZRegex::SIMDSubstringMatch::preprocess(needle, rgx.size());
   while (getline(std::cin, s)) {
     auto z = s.c_str();
     spdlog::debug("Run Result : {}", code_generator.Run(z));
-    auto r = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(z, s.size(), rgx.c_str(), rgx.size());
+    auto r = ZRegex::SIMDSubstringMatch::epsm_a(needle, rgx.size(), z, s.size(), barr);
+    // auto r = ZRegex::SIMDSubstringMatch::epsm_a_alternative(needle, rgx.size(), z, s.size(),
+    // barr);
     spdlog::info("{}", r);
   }
 
