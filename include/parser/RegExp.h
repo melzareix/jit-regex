@@ -23,8 +23,9 @@ public:
     auto tree = parser.regex();
     ZRegex::RegExpVisitor regexVisitor(byte_dfa_utf8);
     auto fa = std::move(tree->accept(&regexVisitor).as<std::unique_ptr<ZRegex::FiniteAutomaton>>());
+    auto x = fa.get();
     fa->Determinize(byte_dfa_utf8);
-    // fa->Visualize();
+    fa->Visualize();
     return std::move(fa);
   }
 };

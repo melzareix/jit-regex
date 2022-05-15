@@ -158,6 +158,23 @@ namespace ZRegex {
       // negation is equivalent to (.&~(cc))
     }
 
+    antlrcpp::Any visitCcEscapedChar(RegexParser::CcEscapedCharContext *context) {
+      if (byte_dfa_utf8_) {
+        if (context->value->getText() == "n") {
+          return ZRegex::FAFactory::ByteAutomaton("\n");
+        }
+        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
+      }
+      return ZRegex::FAFactory::StringAutomaton(context->value->getText());
+    }
+
+    antlrcpp::Any visitCcUnescapedChar(RegexParser::CcUnescapedCharContext *context) {
+      if (byte_dfa_utf8_) {
+        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
+      }
+      return ZRegex::FAFactory::StringAutomaton(context->value->getText());
+    }
+
     antlrcpp::Any visitClassMember(RegexParser::ClassMemberContext *context) override {
       if (context->range()) {
         return std::move(context->range()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
@@ -168,12 +185,25 @@ namespace ZRegex {
             context->predefinedClass()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
       }
       // default case it is a character
-      return std::move(context->character()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+      if (context->regularCharacter()) {
+        return std::move(
+            context->regularCharacter()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+      }
+
+      if (context->ccUnescapedChar()) {
+        return std::move(
+            context->ccUnescapedChar()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+      }
+
+      return std::move(
+          context->ccUnescapedChar()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
     }
     antlrcpp::Any visitRange(RegexParser::RangeContext *context) override {
       if (!byte_dfa_utf8_) {
         auto min = std::move(context->min->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
         auto max = std::move(context->max->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+        auto minx = min.get();
+        auto maxx = max.get();
         auto min_char = *min->initial_state->transitions.begin();
         auto max_char = *max->initial_state->transitions.begin();
 

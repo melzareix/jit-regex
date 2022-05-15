@@ -7,6 +7,9 @@ project(ZRegexStandalone LANGUAGES CXX)
 include(../cmake/tools.cmake)
 
 # ---- Dependencies ----
+include(../cmake/deps/findPCRE2.cmake)
+message(STATUS "PCRE2_LIBRARIES = ${PCRE2_LIBRARIES}")
+message(STATUS "PCRE2_INCLUDE_DIRS = ${PCRE2_INCLUDE_DIRS}")
 
 include(../cmake/CPM.cmake)
 
@@ -24,7 +27,26 @@ CPMAddPackage(
         GITHUB_REPOSITORY google/benchmark
         OPTIONS "BENCHMARK_ENABLE_TESTING NO"
 )
-
+#pcre2
+CPMAddPackage(
+       NAME pcre2
+       GIT_TAG pcre2-10.40
+       GITHUB_REPOSITORY PCRE2Project/pcre2
+)
+#jpcre2
+CPMAddPackage(
+       NAME jpcre2
+       GIT_TAG 10.32.01
+       GITHUB_REPOSITORY jpcre2/jpcre2
+       OPTIONS "PCRE2_STATIC YES"
+)
+# #ctre
+# CPMAddPackage(
+#        NAME ctre
+#        GIT_TAG v3.6
+#        GITHUB_REPOSITORY hanickadot/compile-time-regular-expressions
+# #        OPTIONS "BENCHMARK_ENABLE_TESTING NO"
+# )
 #boost-regex
 CPMAddPackage(
   NAME boost
@@ -48,7 +70,7 @@ IF(SSE4_1_FOUND)
         message("found sse4_2")
         SET(CMAKE_C_FLAGS -march=native)
         SET(CXX_DFLAGS -march=native)
-ENDIF(SSE4_2_FOUND)
+ENDIF(SSE4_1_FOUND)
 ADD_DEFINITIONS(${CXX_DFLAGS})
 
 # ---- Create standalone executable ----
@@ -62,5 +84,14 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 OUTPUT_NAME "ZR
 target_link_libraries(${PROJECT_NAME} boost_regex)
 target_link_libraries(${PROJECT_NAME} benchmark)
 target_link_libraries(${PROJECT_NAME} re2)
+# target_link_libraries(${PROJECT_NAME} pcre2-8)
+# message(STATUS "jpcre2_SOURCE_DIR = ${jpcre2_SOURCE_DIR}")
+# message(STATUS "jpcre2_ADDED = ${jpcre2_ADDED}")
+# target_link_libraries(${PROJECT_NAME} jpcre2)
+# target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE "${jpcre2_SOURCE_DIR}/src")
+# target_link_libraries(${PROJECT_NAME} ctre)
+
+target_link_libraries(${PROJECT_NAME} ${PCRE2_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PUBLIC ${PCRE2_INCLUDE_DIRS})
 
 target_link_libraries(${PROJECT_NAME} ZRegex::ZRegex)

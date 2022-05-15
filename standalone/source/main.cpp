@@ -18,8 +18,15 @@ auto main(int argc, char** argv) -> int {
   options.add_options()("r,regex", "Regex", cxxopts::value<std::string>())(
       "b,backend", "Backend", cxxopts::value<std::string>())(
       "a,ascii", "Support utf-8 encoding", cxxopts::value<bool>()->default_value("false"))(
-      "x,bytedfa", "UTF-8 ByteDFA encoding", cxxopts::value<bool>()->default_value("false"));
+      "x,bytedfa", "UTF-8 ByteDFA encoding", cxxopts::value<bool>()->default_value("false"))(
+      "h,help", "Print help");
   auto result = options.parse(argc, argv);
+
+  if (result.count("help")) {
+    std::cout << options.help() << std::endl;
+    exit(0);
+  }
+
   auto rgx = result["regex"].as<std::string>();
   auto backend = result["backend"].as<std::string>();
   auto bytedfa = result["bytedfa"].as<bool>();
@@ -55,7 +62,8 @@ auto main(int argc, char** argv) -> int {
     auto r = ZRegex::SIMDSubstringMatch::epsm_a(needle, rgx.size(), z, s.size(), barr);
     // auto r = ZRegex::SIMDSubstringMatch::epsm_a_alternative(needle, rgx.size(), z, s.size(),
     // barr);
-    spdlog::info("{}", r);
+    auto rr = code_generator.Run(z);
+    spdlog::info("Results: {} - {}", r, rr);
   }
 
   return 0;

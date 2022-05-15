@@ -8,7 +8,7 @@ grammar Regex;
 /**
  Lexer Rules.
  */
-WS: [ \t\n\r]+ -> skip;
+WS: [\t\n\r]+ -> skip;
 INT: Digit;
 
 Wildcard: '%'; // equivalent to => .*
@@ -66,7 +66,13 @@ characterClass:
 // | CharacterClassStart positive = classMember+ Caret negative = classMember+ CharacterClassEnd #
 // ccMixed;
 
-classMember: character | range | predefinedClass;
+classMember:
+	range
+	| predefinedClass
+	| regularCharacter
+	| ccUnescapedChar
+	| EscapeChar ccEscapedChar;
+
 range: min = character Hyphen max = character;
 
 predefinedClass: '[:' predefinedClassName ':]';
@@ -81,6 +87,8 @@ predefinedClassName:
 
 // regularCharacter: value = LETTER | value = INT;
 regularCharacter: value = LETTER | value = INT;
+// unicodeChar: value = UnicodeEscape;
+
 specialChar:
 	value = Asterisk
 	| value = Plus
@@ -99,6 +107,26 @@ specialChar:
 	| value = Wildcard
 	| value = EscapeChar;
 
+ccEscapedChar:
+	value = CharacterClassStart
+	| value = CharacterClassEnd
+	| value = EscapeChar
+	| value = Newline;
+
+ccUnescapedChar:
+	value = Asterisk
+	| value = Plus
+	| value = Qmark
+	| value = OpenParen
+	| value = CloseParen
+	| value = Caret
+	| value = Hyphen
+	| value = Underscore
+	| value = Pipe
+	| value = OpenBrace
+	| value = CloseBrace
+	| value = Wildcard;
+
 fragment Digit: [0-9];
 // fragment UnicodeLetter: [\p{Alnum}]; fragment UnicodeLetter: [\p{L}\p{M}*]; fragment
 // UnicodeLetter: [\p{Emoji}];
@@ -106,3 +134,6 @@ fragment UnicodeLetter: [\u{00000}-\u{1FFFF}];
 fragment LetterOrDigit: Letter | [0-9];
 fragment Letter: [a-zA-Z];
 fragment ASCII: [\u0000-\u007F];
+fragment HexDigit: [0-9a-fA-F];
+fragment UnicodeEscape:
+	'\\' 'u'+ HexDigit HexDigit HexDigit HexDigit;

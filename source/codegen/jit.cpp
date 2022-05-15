@@ -46,6 +46,10 @@ namespace ZRegex {
                                               llvm::ThinOrFullLTOPhase::None));
         });
 
+    if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
+      spdlog::info("################ BEFORE OPTIMIZATION PASS ################");
+      module.print(llvm::errs(), nullptr);
+    }
     // Optimize the IR!
     MPM.run(module, MAM);
     if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {

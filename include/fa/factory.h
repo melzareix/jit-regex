@@ -189,6 +189,7 @@ namespace ZRegex {
         auto q = std::make_shared<FiniteAutomatonState>();
         p->AddTransition(c, c, q);
         p = q;
+        p->chr = c;
       }
       p->SetAccept();
       fa->SetDeterministic(true);
@@ -205,9 +206,10 @@ namespace ZRegex {
 
       auto q = std::make_shared<FiniteAutomatonState>();
       p->AddTransition(c, c, q);
-
+      q->chr = b1;
       q->SetAccept();
       fa->SetDeterministic(true);
+      auto xx = fa.get();
       return fa;
     }
 

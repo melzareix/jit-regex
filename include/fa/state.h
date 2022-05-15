@@ -20,6 +20,7 @@ namespace ZRegex {
 
     uint32_t id;
     bool accept;
+    uint8_t chr = '\0';
     std::unordered_set<ZRegex::FiniteAutomatonTransition,
                        ZRegex::FiniteAutomatonTransition::HashFunction>
         transitions;

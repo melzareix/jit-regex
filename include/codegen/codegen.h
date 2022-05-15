@@ -30,7 +30,8 @@ namespace ZRegex {
     std::unique_ptr<ZRegex::JIT> jit;
     llvm::orc::ThreadSafeContext context;
 
-    void GenerateAndCompileCpp(const std::unique_ptr<FiniteAutomaton> dfa, const char* filename);
+    void GenerateAndCompileCpp(const std::unique_ptr<FiniteAutomaton> dfa, std::string pattern,
+                               const char* filename);
     void GenerateAndCompileLLVM(const std::unique_ptr<FiniteAutomaton> dfa);
     void JIT();
     void JIT_cpp();

@@ -27,14 +27,20 @@
 #include <spdlog/spdlog.h>
 
 #include <boost/regex.hpp>
+// #include <ctre.hpp>
 #include <memory>
 #include <regex>
 #include <sstream>
 
+// #include "fa/special/epsm.h"
 #include "fa/special/kmp.h"
 #include "fa/special/simd.h"
+// #include "fa/special/smart-epsm.h"
+#include "fa/special/simd-avx512f.h"
 #include "spdlog/cfg/argv.h"
 #include "spdlog/pattern_formatter.h"
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include "pcre2.h"
 
 #define DFA_LLVM_U8 0
 #define DFA_LLVM_U32 1
@@ -121,8 +127,11 @@ static void BENCH_SIMD_EPSM(benchmark::State& state, const std::string& pattern,
   auto m = pattern.size();
   for (auto _ : state) {
     while (getline(st, line)) {
-      benchmark::DoNotOptimize(
-          matches += ZRegex::SIMDSubstringMatch::epsm_a(pcstr, m, line.c_str(), line.size(), barr));
+      // benchmark::DoNotOptimize(
+      //     matches += ZRegex::SIMDSubstringMatch::epsm_a(pcstr, m, line.c_str(), line.size(),
+      //     barr));
+      benchmark::DoNotOptimize(matches
+                               += avx2_strstr_anysize_single(line.c_str(), line.size(), pcstr, m));
     }
   }
   state.counters["Matches"] = matches;
@@ -137,11 +146,11 @@ static void BENCH_SIMD_MULTIPATTERN(benchmark::State& state, const std::string& 
   auto patterns = SplitString(pattern, "%");
   for (auto _ : state) {
     while (getline(st, line)) {
-      auto p1 = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(
-          line.c_str(), line.size(), patterns[0].c_str(), patterns[0].size());
-      auto p2 = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(
-          line.c_str(), line.size(), patterns[1].c_str(), patterns[1].size());
-      if (p1 != std::string::npos && p2 != std::string::npos && p2 >= p1) matches += 1;
+      auto p1
+          = avx2_strstr_anysize(line.c_str(), line.size(), patterns[0].c_str(), patterns[0].size());
+      auto p2
+          = avx2_strstr_anysize(line.c_str(), line.size(), patterns[1].c_str(), patterns[1].size());
+      if (p1 != -1 && p2 != -1 && p2 >= p1) matches += 1;
     }
   }
   state.counters["Matches"] = matches;
@@ -157,7 +166,7 @@ static void BENCH_BOOST(benchmark::State& state, const std::string& pattern,
   for (auto _ : state) {
     if (regex == nullptr) regex = new boost::regex(result);
     while (getline(st, line)) {
-      benchmark::DoNotOptimize(matches += boost::regex_match(line, *regex) ? 1 : 0);
+      benchmark::DoNotOptimize(matches += boost::regex_match(line.c_str(), *regex) ? 1 : 0);
     }
   }
   state.counters["Matches"] = matches;
@@ -247,6 +256,64 @@ static void BENCH_KMP_DFA(benchmark::State& state, const std::string& pattern,
   state.counters["Matches"] = matches;
 }
 
+static void BENCH_PCRE2_DFA(benchmark::State& state, const std::string& pattern,
+                            ZRegex::CodegenOpts&& opts, const std::string& dataset) {
+  INIT;
+  std::string line;
+  state.SetLabel("PCRE2_DFA");
+  pcre2_code* re = nullptr;
+  pcre2_match_data* match_data = nullptr;
+
+  int errorcode;
+  PCRE2_SIZE erroroffset;
+  PCRE2_SPTR p = (PCRE2_SPTR)(pattern.c_str());
+  re = pcre2_compile(p, pattern.size(), PCRE2_UCP | PCRE2_UTF, &errorcode, &erroroffset, nullptr);
+  match_data = pcre2_match_data_create(0, nullptr);
+  // match_data = pcre2_match_data_create(re, nullptr);
+  int dfa_workspace[100];
+
+  for (auto _ : state) {
+    while (getline(st, line)) {
+      if (re == nullptr) spdlog::error("fuck");
+      if (match_data == nullptr) spdlog::error("fuck2");
+      // auto rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0,
+      // PCRE2_NO_UTF_CHECK,
+      //                           match_data, nullptr);
+      auto rt = pcre2_dfa_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0,
+                                PCRE2_NO_UTF_CHECK | PCRE2_DFA_SHORTEST, match_data, nullptr,
+                                dfa_workspace, 100);
+
+      // spdlog::error(rt);
+      if (rt >= 0) matches += 1;
+    }
+    state.counters["Matches"] = matches;
+  }
+}
+
+static void BENCH_PCRE2(benchmark::State& state, const std::string& pattern,
+                        ZRegex::CodegenOpts&& opts, const std::string& dataset) {
+  INIT;
+  std::string line;
+  state.SetLabel("PCRE2");
+  pcre2_code* re = nullptr;
+  pcre2_match_data* match_data = nullptr;
+
+  int errorcode;
+  PCRE2_SIZE erroroffset;
+  PCRE2_SPTR p = (PCRE2_SPTR)(pattern.c_str());
+  re = pcre2_compile(p, pattern.size(), PCRE2_UCP | PCRE2_UTF, &errorcode, &erroroffset, nullptr);
+  match_data = pcre2_match_data_create_from_pattern(re, nullptr);
+  auto err = pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  for (auto _ : state) {
+    while (getline(st, line)) {
+      auto rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0, PCRE2_NO_UTF_CHECK,
+                                match_data, nullptr);
+
+      if (rt >= 0) matches += 1;
+    }
+    state.counters["Matches"] = matches;
+  }
+}
 static void BENCH_DFA(benchmark::State& state, const std::string& pattern,
                       ZRegex::CodegenOpts&& opts, const std::string& dataset) {
   INIT LABEL APPLY_PARTIAL;

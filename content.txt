@@ -1,0 +1,30 @@
+constexpr unsigned clz(unsigned char a) { return __builtin_clz(a) - (8 * (sizeof(unsigned) - 1)); }
+
+inline unsigned readMultiByte(const char* reader, const char& firstByte, unsigned& idx,
+                              unsigned int& byteLen) {
+  switch (byteLen) {
+    case 2:
+      return ((firstByte & 0x1F) << 6) | (reader[idx + 1] & 0x3F);
+    case 3:
+      return ((firstByte & 0xF) << 12) | ((reader[idx + 1] & 0x3F) << 6) | (reader[idx + 2] & 0x3F);
+    case 4:
+      return ((firstByte & 0x7) << 18) | ((reader[idx + 1] & 0x3F) << 12)
+             | ((reader[idx + 2] & 0x3F) << 6) | (reader[idx + 3] & 0x3F);
+    default:
+      return firstByte;
+  };
+}
+
+inline unsigned multiByteSequenceLength(const char& firstByte) {
+  unsigned len = clz(~firstByte);
+  return len ? len : 1;
+}
+
+inline unsigned nextByte(const char* str, unsigned& idx) {
+  unsigned c = 0;
+  char b1 = str[idx];
+  unsigned byteLen = multiByteSequenceLength(b1);
+  c = readMultiByte(str, b1, idx, byteLen);
+  idx += byteLen;
+  return c;
+}
