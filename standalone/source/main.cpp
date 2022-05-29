@@ -3,6 +3,7 @@
 #include <string>
 
 #include "cxxopts.hpp"
+#include "fa/special/epsm_multi.h"
 #include "fa/special/kmp.h"
 #include "fa/special/simd.h"
 #include "helpers/utf8.h"
@@ -54,16 +55,20 @@ auto main(int argc, char** argv) -> int {
   // ZRegex::SIMDSubstringMatch::clean_b(barr, p.size());
   // ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(sx, 10, p, 5);
 
-  auto needle = rgx.c_str();
-  auto barr = ZRegex::SIMDSubstringMatch::preprocess(needle, rgx.size());
+  // auto needle = rgx.c_str();
+  // auto barr = ZRegex::SIMDSubstringMatch::preprocess(needle, rgx.size());
+  // epsm_process(rgx.c_str(), rgx.size());
+  auto epsm1 = ZRegex::EPSMMatcher(rgx.c_str(), rgx.size());
   while (getline(std::cin, s)) {
     auto z = s.c_str();
-    spdlog::debug("Run Result : {}", code_generator.Run(z));
-    auto r = ZRegex::SIMDSubstringMatch::epsm_a(needle, rgx.size(), z, s.size(), barr);
+    spdlog::error("EPSM Last Result: {}", epsm1.epsm2_search_find_last(z, s.size()));
+    spdlog::error("EPSM First Result: {}", epsm1.epsm2_search_find_first(z, s.size()));
+    // spdlog::debug("Run Result : {}", code_generator.Run(z));
+    // auto r = ZRegex::SIMDSubstringMatch::epsm_a(needle, rgx.size(), z, s.size(), barr);
     // auto r = ZRegex::SIMDSubstringMatch::epsm_a_alternative(needle, rgx.size(), z, s.size(),
     // barr);
     auto rr = code_generator.Run(z);
-    spdlog::info("Results: {} - {}", r, rr);
+    spdlog::info("Results: {}", rr);
   }
 
   return 0;

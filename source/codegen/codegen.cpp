@@ -50,7 +50,7 @@ namespace ZRegex {
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error-prone but works for our case here as prototype
     auto cmd = fmt::format(
-        "cd /tmp && clang-13 -std=c++14 -march=native -O3 -emit-llvm {}.cpp -o {}.ll -S", filename,
+        "cd /tmp && clang-13 -std=c++14 -march=native -O2 -emit-llvm {}.cpp -o {}.ll -S", filename,
         filename);
     auto exit_code = system(cmd.c_str());
     if (exit_code) {
@@ -89,4 +89,8 @@ namespace ZRegex {
     JIT();
   }
 
+  void Codegen::CompileForBenchmark(const char *pattern) {
+    traverse_ptr = nullptr;
+    Compile(pattern);
+  }
 }  // namespace ZRegex

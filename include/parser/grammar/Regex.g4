@@ -39,7 +39,7 @@ regex: alternation EOF;
 alternation: expression ('|' expression)*;
 
 // concat expression
-expression: element*;
+expression: element+;
 element: atom quantifier?;
 
 /*
@@ -57,25 +57,24 @@ atom:
 	| characterClass
 	| Wildcard
 	| '(' capture = alternation ')';
-character: regularCharacter | EscapeChar specialChar;
+character: EscapeChar specialChar | regularCharacter;
 
 characterClass:
 	Underscore																# anyChar
 	| CharacterClassStart positive = classMember+ CharacterClassEnd			# ccPositive
 	| CharacterClassStart Caret negative = classMember+ CharacterClassEnd	# ccNegative;
-// | CharacterClassStart positive = classMember+ Caret negative = classMember+ CharacterClassEnd #
-// ccMixed;
 
 classMember:
 	range
 	| predefinedClass
-	| regularCharacter
 	| ccUnescapedChar
-	| EscapeChar ccEscapedChar;
+	| EscapeChar ccEscapedChar
+	| regularCharacter;
 
 range: min = character Hyphen max = character;
 
-predefinedClass: '[:' predefinedClassName ':]';
+predefinedClass:
+	CharacterClassStart ':' predefinedClassName ':' CharacterClassEnd;
 predefinedClassName:
 	value = 'ALPHA'
 	| value = 'UPPER'
@@ -86,9 +85,14 @@ predefinedClassName:
 	| value = 'WHITESPACE';
 
 // regularCharacter: value = LETTER | value = INT;
-regularCharacter: value = LETTER | value = INT;
-// unicodeChar: value = UnicodeEscape;
-
+regularCharacter:
+	value = LETTER
+	| value = Caret
+	| value = Hyphen
+	| value = Newline
+	| value = Comma
+	| value = ':'
+	| value = INT;
 specialChar:
 	value = Asterisk
 	| value = Plus
@@ -99,7 +103,7 @@ specialChar:
 	| value = OpenParen
 	| value = CloseParen
 	| value = Caret
-	| value = Hyphen
+	// | value = Hyphen
 	| value = Underscore
 	| value = Pipe
 	| value = OpenBrace
@@ -108,10 +112,10 @@ specialChar:
 	| value = EscapeChar;
 
 ccEscapedChar:
-	value = CharacterClassStart
-	| value = CharacterClassEnd
 	| value = EscapeChar
-	| value = Newline;
+	| value = Newline
+	| value = CharacterClassStart
+	| value = CharacterClassEnd;
 
 ccUnescapedChar:
 	value = Asterisk
@@ -120,12 +124,12 @@ ccUnescapedChar:
 	| value = OpenParen
 	| value = CloseParen
 	| value = Caret
-	| value = Hyphen
 	| value = Underscore
 	| value = Pipe
 	| value = OpenBrace
 	| value = CloseBrace
-	| value = Wildcard;
+	| value = Wildcard
+	| value = Hyphen;
 
 fragment Digit: [0-9];
 // fragment UnicodeLetter: [\p{Alnum}]; fragment UnicodeLetter: [\p{L}\p{M}*]; fragment
@@ -134,6 +138,3 @@ fragment UnicodeLetter: [\u{00000}-\u{1FFFF}];
 fragment LetterOrDigit: Letter | [0-9];
 fragment Letter: [a-zA-Z];
 fragment ASCII: [\u0000-\u007F];
-fragment HexDigit: [0-9a-fA-F];
-fragment UnicodeEscape:
-	'\\' 'u'+ HexDigit HexDigit HexDigit HexDigit;

@@ -51,6 +51,7 @@ namespace ZRegex {
       // concat all elements
       std::vector<std::unique_ptr<FiniteAutomaton>> automatons;
       for (const auto &expr : context->element()) {
+        if (expr == nullptr) continue;
         auto z = std::move(expr->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
         automatons.push_back(std::move(z));
       }
@@ -190,9 +191,9 @@ namespace ZRegex {
             context->regularCharacter()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
       }
 
-      if (context->ccUnescapedChar()) {
+      if (context->ccEscapedChar()) {
         return std::move(
-            context->ccUnescapedChar()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+            context->ccEscapedChar()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
       }
 
       return std::move(

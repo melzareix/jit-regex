@@ -33,10 +33,10 @@
 #include <sstream>
 
 // #include "fa/special/epsm.h"
+#include "fa/special/epsm_multi.h"
 #include "fa/special/kmp.h"
-#include "fa/special/simd.h"
-// #include "fa/special/smart-epsm.h"
 #include "fa/special/simd-avx512f.h"
+#include "fa/special/simd.h"
 #include "spdlog/cfg/argv.h"
 #include "spdlog/pattern_formatter.h"
 #define PCRE2_CODE_UNIT_WIDTH 8
@@ -116,6 +116,25 @@ static std::vector<std::string> SplitString(std::string str, std::string delimet
 }
 
 // TODO MORE THAN 2 PATTERNS
+static void BENCH_SIMD_EPSM_SMART(benchmark::State& state, const std::string& pattern,
+                                  ZRegex::CodegenOpts&& opts, const std::string& dataset) {
+  INIT;
+  std::string line;
+  // assert(pattern.size() <= 32);  // only good if pattern length is small
+  state.SetLabel("SIMD EPSMA_SMART Regex");
+  auto patterns = SplitString(pattern, "%");
+  auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
+  auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
+  for (auto _ : state) {
+    while (getline(st, line)) {
+      auto p1 = epsm1.epsm2_search_find_first(line.c_str(), line.size());
+      auto p2 = epsm2.epsm2_search_find_last(line.c_str(), line.size());
+      if (p1 != -1 && p2 != -1 && p2 >= p1) matches += 1;
+    }
+  }
+  state.counters["Matches"] = matches;
+}
+
 static void BENCH_SIMD_EPSM(benchmark::State& state, const std::string& pattern,
                             ZRegex::CodegenOpts&& opts, const std::string& dataset) {
   INIT;
@@ -144,12 +163,15 @@ static void BENCH_SIMD_MULTIPATTERN(benchmark::State& state, const std::string& 
   std::string line;
   state.SetLabel("SIMD MULTIPATTERN Regex");
   auto patterns = SplitString(pattern, "%");
+  auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
+  auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
+  // auto b1 = epsm1.preprocess();
+  // auto b2 = epsm2.preprocess();
+
   for (auto _ : state) {
     while (getline(st, line)) {
-      auto p1
-          = avx2_strstr_anysize(line.c_str(), line.size(), patterns[0].c_str(), patterns[0].size());
-      auto p2
-          = avx2_strstr_anysize(line.c_str(), line.size(), patterns[1].c_str(), patterns[1].size());
+      auto p1 = epsm1.epsma_elz_early(line.c_str(), line.size());
+      auto p2 = epsm2.epsma_elz(line.c_str(), line.size());
       if (p1 != -1 && p2 != -1 && p2 >= p1) matches += 1;
     }
   }
@@ -274,8 +296,6 @@ static void BENCH_PCRE2_DFA(benchmark::State& state, const std::string& pattern,
 
   for (auto _ : state) {
     while (getline(st, line)) {
-      if (re == nullptr) spdlog::error("fuck");
-      if (match_data == nullptr) spdlog::error("fuck2");
       // auto rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0,
       // PCRE2_NO_UTF_CHECK,
       //                           match_data, nullptr);

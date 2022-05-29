@@ -29,11 +29,6 @@ typedef struct list {
 } LIST;
 
 int epsm2_search(const char* pattern, uint32_t patlen, const char* x, uint32_t textlen) {
-  //   if (patlen < 2) return search1(pattern, patlen, x, textlen);
-  //   if (patlen == 2) return search2(pattern, patlen, x, textlen);
-  //   if (patlen == 3) return search3(pattern, patlen, x, textlen);
-  //   if (patlen == 4) return search4(pattern, patlen, x, textlen);
-  //   if (patlen >= 16) return search16(pattern, patlen, x, textlen);
   assert(patlen < 16);
   char* y0;
   int i, j, k, count = 0;

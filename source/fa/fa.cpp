@@ -228,7 +228,7 @@ namespace ZRegex {
     auto iter = 0;
     while (!worklist.empty()) {
       // probably will fail fallback
-      if (iter > 1000) {
+      if (iter > 3000) {
         throw std::runtime_error("Pattern too large! Potential Exponential State Explosion!");
       }
       auto s = worklist.front();
@@ -270,10 +270,11 @@ namespace ZRegex {
           if (i + 1 < points.size()) {
             max = points[i + 1] - 1;
           } else {
-            if (byte_dfa_utf8)
+            if (byte_dfa_utf8) {
               max = Utf8::MAX_TRANS_BYTE;
-            else
+            } else {
               max = Utf8::MAX_TRANS;
+            }
           }
 
           r->AddTransition(min, max, q);

@@ -1,51 +1,39 @@
-// #include <pcre2/pcre2.h>
+// #include "suites/compile/common.hpp"
+#include "suites/compile/sql.hpp"
 
-// #define PCRE2_STATIC 1
-// #include "pcre2.h"
-#include "suites/ip.hpp"
-
-// void count_single() {
-//   std::string line
-//       = "\"re carefully since the slyly unusual instructions. final, special 192.168.1.1 packages
-//       "
-//         "are\"";
-//   std::string pattern = "%([0-9]+.[0-9]+.[0-9]+.[0-9]+)";
-//   auto barr = ZRegex::SIMDSubstringMatch::preprocess(pattern.c_str(), pattern.size());
-//   auto pcstr = pattern.c_str();
-//   auto linecstr = line.c_str();
-//   auto m = pattern.size();
-
-//   auto r1 = ZRegex::SIMDSubstringMatch::epsm_a(pcstr, m, linecstr, line.size(), barr);
-//   spdlog::info("{}", r1);
-// }
-
-// void count() {
-//   uint64_t cnt = 0;
-//   uint64_t recount = 0;
+// void cmp(char* pattern, char* dataset) {
+//   std::ifstream st(dataset, std::ios_base::binary);
 //   std::string line;
-//   std::string pattern = "packages";
-//   std::ifstream st(DS_TPCHORDERS, std::ios_base::binary);
-//   auto barr = ZRegex::SIMDSubstringMatch::preprocess(pattern.c_str(), pattern.size());
-//   auto pcstr = pattern.c_str();
-//   auto m = pattern.size();
+//   double matches = 0;
+//   auto p = re2::RE2("special.*packages");
 
-//   re2::RE2 p = re2::RE2(pattern);
-//   auto diff = 0;
+//   auto patterns = SplitString(pattern, "%");
+//   auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
+//   auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
+
+//   auto b1 = epsm1.preprocess();
+//   auto b2 = epsm2.preprocess();
+//   bool x, y, z;
+//   int cnt = 0;
 //   while (getline(st, line)) {
-//     // auto r1 = ZRegex::SIMDSubstringMatch::epsm_a(pcstr, m, line.c_str(), line.size(), barr);
-//     auto r1 = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(line.c_str(), line.size(), pcstr,
-//     m); cnt += r1; auto r2 = re2::RE2::PartialMatch(line, p); recount += r2; if (r1 != r2) {
-//       diff++;
-//       spdlog::warn("Wrong SIMD: re2 {} - simd {} - \"{}\"", r2, r1, line);
-//       // auto q = ZRegex::SIMDSubstringMatch::epsm_a(pcstr, m, line.c_str(), line.size(), barr);
-//       auto q = ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(line.c_str(), line.size(), pcstr,
-//       m); spdlog::warn("{}", q);
+//     // auto p1 = epsm1.epsm2_search_find_first(line.c_str(), line.size());
+//     // auto p2 = epsm2.epsm2_search_find_last(line.c_str(), line.size());
+//     auto p3 = epsm1.epsma_elz_early(line.c_str(), line.size(), b1);
+//     auto p4 = epsm2.epsma_elz(line.c_str(), line.size(), b2);
+//     x = re2::RE2::PartialMatch(line, p);
+//     // y = p1 != -1 && p2 != -1 && p2 >= p1;
+//     z = p3 != -1 && p4 != -1 && p3 <= p4;
+//     // spdlog::warn("Result: {} - {} - {}", x, p3, p4);
+//     if (x != z) {
+//       spdlog::error(line);
+//       // spdlog::warn("{} - {}", p1, p2);
+//       spdlog::error("Fail: {} - {} - {}", x, p3, p4);
+//       auto p5 = epsm1.epsma_elz_early(line.c_str(), line.size(), b1);
+//       auto p6 = epsm2.epsma_elz(line.c_str(), line.size(), b2);
+
+//       return;
 //     }
 //   }
-
-//   spdlog::warn("recount: {}", recount);
-//   spdlog::warn("diff: {}", diff);
-//   spdlog::warn("count: {}", cnt);
 // }
 
 int main(int argc, char** argv) {
@@ -53,14 +41,8 @@ int main(int argc, char** argv) {
   spdlog::cfg::load_argv_levels(argc, argv);
   ::benchmark::RunSpecifiedBenchmarks();
   ::benchmark::Shutdown();
-  // count();
-  // count_single();
-  // auto s = "a@gmail.com";
-  // using namespace ctre::literals;
-  // if (auto m = ctre::match<".*([a-zA-Z0-9_.+\\-]+).*">(s)) {
-  //   std::cout << "hello";
-  // } else {
-  //   std::cout << "no";
-  // }
+
+  // cmp("special%packages", "/home/elzarei/test.txt");
+  // cmp("special%packages", DS_TPCHORDERS);
   return 0;
 }
