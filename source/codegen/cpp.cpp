@@ -5,6 +5,7 @@
 
 #include <vector>
 
+#include "codegen/cpp-simd.h"
 #include "fa/fa.h"
 
 // #define DEBUG 1
@@ -24,6 +25,8 @@ namespace ZRegex {
     // file is temporary compiled
     auto fp = fmt::format("/tmp/{}.cpp", filename);
     fs.open(fp);
+    // std::string s = "special packages";
+    // GenerateSIMDCode(fs, s);
     if (opts.IsUTF32()) {
       CppCodeGen::GenerateUtf32(fs);
     }
@@ -36,6 +39,7 @@ namespace ZRegex {
 
   void CppCodeGen::GenerateDebuggingMain(std::ofstream &fs) {
     fs << "#include <iostream>" << std::endl;
+    fs << "#include <x86intrin.h>" << std::endl;
     fs << "#include <string>" << std::endl;
     fs << "int main(int argc, char const *argv[]) {";
     fs << "std::string s;";
@@ -53,7 +57,7 @@ namespace ZRegex {
     fs << "  return __builtin_clz(a) - (8 * (sizeof(unsigned) - 1));";
     fs << "}" << std::endl;
 
-    fs << "unsigned readMultiByte(const char* reader, const char& firstByte, unsigned& idx, "
+    fs << "inline unsigned readMultiByte(const char* reader, const char& firstByte, unsigned& idx, "
           "unsigned int& byteLen) {";
     fs << "switch (byteLen) {";
     fs << "  case 2:";
@@ -76,7 +80,7 @@ namespace ZRegex {
     fs << "  return len ? len : 1;";
     fs << "}" << std::endl;
 
-    fs << "unsigned nextByte(const char *str, unsigned &idx) {";
+    fs << "inline unsigned nextByte(const char *str, unsigned &idx) {";
     fs << "  unsigned c = 0;";
     fs << "  char b1 = str[idx];";
     fs << "  unsigned byteLen = multiByteSequenceLength(b1);";
@@ -87,9 +91,10 @@ namespace ZRegex {
   }
   void CppCodeGen::GenerateTraverseWhileLoop(std::unique_ptr<FiniteAutomaton> dfa,
                                              std::ofstream &fs) {
-    fs << "bool traverse(const char* str, unsigned int n) {\n";
+    fs << "xpbool traverse(const char* str, unsigned int n) {\n";
     fs << "unsigned int idx = 0;" << std::endl;
     fs << "unsigned int state = " << dfa->initial_state->id << ";" << std::endl;
+
     auto states = dfa->GetStates();
 
     fs << "while (idx < n) {" << std::endl;
@@ -142,6 +147,13 @@ namespace ZRegex {
     fs << "      else return false;" << std::endl;
     fs << "      break;" << std::endl;
   }
+
+  // Compares two intervals according to starting times.
+  bool compareInterval(std::shared_ptr<FiniteAutomatonState> i1,
+                       std::shared_ptr<FiniteAutomatonState> i2) {
+    return (i1->id < i2->id);
+  }
+
   void CppCodeGen::GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream &fs) {
     fs << "bool traverse(const char* str, unsigned int n) {";
     fs << "unsigned int idx = 0;" << std::endl;
@@ -152,7 +164,13 @@ namespace ZRegex {
     } else {
       fs << "  unsigned char c;" << std::endl;
     }
-    auto states = dfa->GetStates();
+    // auto states = dfa->GetStates();
+
+    auto states_unordered = dfa->GetStates();
+    auto states = std::vector<std::shared_ptr<FiniteAutomatonState>>();
+    states.insert(states.end(), states_unordered.begin(), states_unordered.end());
+
+    std::sort(states.begin(), states.end(), compareInterval);
 
     // Initial State
     CppCodeGen::GenerateState(*dfa->initial_state, fs);
@@ -167,6 +185,21 @@ namespace ZRegex {
     fs << "}" << std::endl;
   }
 
+  void CppCodeGen::get_string_chain(std::shared_ptr<FiniteAutomatonState> to, uint32_t i,
+                                    std::stringstream &ss) {
+    if (to->chr == '\0') {
+      ss << '\0';
+      return;
+    };
+    if (to->transitions.size() != 1) {
+      ss << to->chr;
+      return;
+    }
+
+    ss << to->chr;
+    this->get_string_chain((to->transitions.begin())->to, i + 1, ss);
+  }
+
   void CppCodeGen::GenerateState(const FiniteAutomatonState &state, std::ofstream &fs) {
     fs << "s" << state.id << ": " << std::endl;
     fs << "  if (idx >= n) return false;" << std::endl;
@@ -175,6 +208,9 @@ namespace ZRegex {
     } else {
       fs << "  c = str[idx++];" << std::endl;
     }
+    auto ptr = std::make_shared<FiniteAutomatonState>(state);
+    std::stringstream ss;
+    this->get_string_chain(ptr, 0, ss);
     for (auto &t : state.transitions) {
       auto goto_accept = t.to->accept;
 

@@ -31,11 +31,12 @@ namespace ZRegex {
 
     static std::unique_ptr<FiniteAutomaton> AnyCharByteDFA() {
       auto from_u8 = std::string(u8"\u0000");
-      auto to_u8 = std::string(u8"\uffff");
+      auto to_u8 = std::string(u8"􏿿");
       auto range_ = UTF8Range(from_u8, to_u8);
       std::vector<std::vector<std::vector<uint8_t>>> ranges;
       while (range_.hasNext()) {
         ranges.push_back(range_.NextRange());
+        spdlog::warn("{} - {}", ranges.back()[0][0], ranges.back()[0][1]);
       }
       return std::move(FAFactory::RangeDFA(ranges));
     }
@@ -189,6 +190,7 @@ namespace ZRegex {
         auto q = std::make_shared<FiniteAutomatonState>();
         p->AddTransition(c, c, q);
         p = q;
+        p->chr = c;
       }
       p->SetAccept();
       fa->SetDeterministic(true);
@@ -205,9 +207,10 @@ namespace ZRegex {
 
       auto q = std::make_shared<FiniteAutomatonState>();
       p->AddTransition(c, c, q);
-
+      q->chr = b1;
       q->SetAccept();
       fa->SetDeterministic(true);
+      auto xx = fa.get();
       return fa;
     }
 

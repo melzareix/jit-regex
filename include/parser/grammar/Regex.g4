@@ -8,7 +8,7 @@ grammar Regex;
 /**
  Lexer Rules.
  */
-WS: [ \t\n\r]+ -> skip;
+WS: [\t\n\r]+ -> skip;
 INT: Digit;
 
 Wildcard: '%'; // equivalent to => .*
@@ -39,7 +39,7 @@ regex: alternation EOF;
 alternation: expression ('|' expression)*;
 
 // concat expression
-expression: element*;
+expression: element+;
 element: atom quantifier?;
 
 /*
@@ -57,19 +57,24 @@ atom:
 	| characterClass
 	| Wildcard
 	| '(' capture = alternation ')';
-character: regularCharacter | EscapeChar specialChar;
+character: EscapeChar specialChar | regularCharacter;
 
 characterClass:
 	Underscore																# anyChar
 	| CharacterClassStart positive = classMember+ CharacterClassEnd			# ccPositive
 	| CharacterClassStart Caret negative = classMember+ CharacterClassEnd	# ccNegative;
-// | CharacterClassStart positive = classMember+ Caret negative = classMember+ CharacterClassEnd #
-// ccMixed;
 
-classMember: character | range | predefinedClass;
+classMember:
+	range
+	| predefinedClass
+	| ccUnescapedChar
+	| EscapeChar ccEscapedChar
+	| regularCharacter;
+
 range: min = character Hyphen max = character;
 
-predefinedClass: '[:' predefinedClassName ':]';
+predefinedClass:
+	CharacterClassStart ':' predefinedClassName ':' CharacterClassEnd;
 predefinedClassName:
 	value = 'ALPHA'
 	| value = 'UPPER'
@@ -80,7 +85,14 @@ predefinedClassName:
 	| value = 'WHITESPACE';
 
 // regularCharacter: value = LETTER | value = INT;
-regularCharacter: value = LETTER | value = INT;
+regularCharacter:
+	value = LETTER
+	| value = Caret
+	| value = Hyphen
+	| value = Newline
+	| value = Comma
+	| value = ':'
+	| value = INT;
 specialChar:
 	value = Asterisk
 	| value = Plus
@@ -91,13 +103,33 @@ specialChar:
 	| value = OpenParen
 	| value = CloseParen
 	| value = Caret
-	| value = Hyphen
+	// | value = Hyphen
 	| value = Underscore
 	| value = Pipe
 	| value = OpenBrace
 	| value = CloseBrace
 	| value = Wildcard
 	| value = EscapeChar;
+
+ccEscapedChar:
+	| value = EscapeChar
+	| value = Newline
+	| value = CharacterClassStart
+	| value = CharacterClassEnd;
+
+ccUnescapedChar:
+	value = Asterisk
+	| value = Plus
+	| value = Qmark
+	| value = OpenParen
+	| value = CloseParen
+	| value = Caret
+	| value = Underscore
+	| value = Pipe
+	| value = OpenBrace
+	| value = CloseBrace
+	| value = Wildcard
+	| value = Hyphen;
 
 fragment Digit: [0-9];
 // fragment UnicodeLetter: [\p{Alnum}]; fragment UnicodeLetter: [\p{L}\p{M}*]; fragment

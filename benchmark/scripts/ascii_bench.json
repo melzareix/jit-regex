@@ -1,6 +1,11 @@
 {
   "Suites": [
     {
+      "name": "ip",
+      "dataset": "/home/elzarei/reddit_data/dataset.txt",
+      "patterns": ["[0-9]+.[0-9]+.[0-9]+.[0-9]+"]
+    },
+    {
       "name": "tpchlineitem",
       "dataset": "/home/elzarei/tpch-data/out/lineitem.tbl.csv.txt",
       "patterns": ["ular"]

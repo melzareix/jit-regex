@@ -27,6 +27,8 @@ namespace ZRegex {
     std::unique_ptr<FiniteAutomaton> dfa;
     const char* filename;
 
+    void get_string_chain(std::shared_ptr<FiniteAutomatonState> to, uint32_t i,
+                          std::stringstream& ss);
     void GenerateUtf32(std::ofstream& fs);
     void GenerateDebuggingMain(std::ofstream& fs);
     void GenerateTraverse(std::unique_ptr<FiniteAutomaton> dfa, std::ofstream& fs);

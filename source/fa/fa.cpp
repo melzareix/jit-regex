@@ -122,9 +122,9 @@ namespace ZRegex {
         fs << " " << s->id;
         fs << " -> " << t.to->id << "[label=\"";
         if (t.min != t.max) {
-          fs << fmt::format("{:x}", t.min) << "-" << fmt::format("{:x}", t.max);
+          fs << fmt::format("0x{:x}", t.min) << "-" << fmt::format("0x{:x}", t.max);
         } else {
-          fs << fmt::format("{:x}", t.min);
+          fs << fmt::format("0x{:x}", t.min);
         }
         fs << "\"]" << std::endl;
       }
@@ -222,12 +222,13 @@ namespace ZRegex {
     worklist.push_back(initial_set);
 
     initial_state = std::make_shared<FiniteAutomatonState>();
+    initial_state->chr = initial_state->chr;
     new_state[initial_set] = initial_state;
 
     auto iter = 0;
     while (!worklist.empty()) {
       // probably will fail fallback
-      if (iter > 1000) {
+      if (iter > 3000) {
         throw std::runtime_error("Pattern too large! Potential Exponential State Explosion!");
       }
       auto s = worklist.front();
@@ -258,6 +259,7 @@ namespace ZRegex {
           if (new_state.count(p) == 0) {
             worklist.push_back(p);
             q = new_state[p] = std::make_shared<FiniteAutomatonState>();
+            if (p.size() == 1) q->chr = (p.begin())->get()->chr;
           } else {
             q = new_state[p];
           }
@@ -268,10 +270,11 @@ namespace ZRegex {
           if (i + 1 < points.size()) {
             max = points[i + 1] - 1;
           } else {
-            if (byte_dfa_utf8)
+            if (byte_dfa_utf8) {
               max = Utf8::MAX_TRANS_BYTE;
-            else
+            } else {
               max = Utf8::MAX_TRANS;
+            }
           }
 
           r->AddTransition(min, max, q);

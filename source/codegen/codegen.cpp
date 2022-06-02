@@ -40,7 +40,8 @@ namespace ZRegex {
 
   bool Codegen::Run(const char *inp) { return traverse_ptr(const_cast<char *>(inp), strlen(inp)); }
   jit_func_t Codegen::GetFnPtr() { return traverse_ptr; }
-  void Codegen::GenerateAndCompileCpp(std::unique_ptr<FiniteAutomaton> dfa, const char *filename) {
+  void Codegen::GenerateAndCompileCpp(std::unique_ptr<FiniteAutomaton> dfa, std::string pattern,
+                                      const char *filename) {
     // (1) Generate the cpp
     this->filename_ = filename;
     CppCodeGen cppGenerator(std::move(dfa), opts_, filename);
@@ -48,8 +49,9 @@ namespace ZRegex {
 
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error-prone but works for our case here as prototype
-    auto cmd = fmt::format("cd /tmp && clang-13 -std=c++14 -O3 -emit-llvm {}.cpp -o {}.ll -S",
-                           filename, filename);
+    auto cmd = fmt::format(
+        "cd /tmp && clang-13 -std=c++14 -march=native -O2 -emit-llvm {}.cpp -o {}.ll -S", filename,
+        filename);
     auto exit_code = system(cmd.c_str());
     if (exit_code) {
       // handle bad exit code
@@ -65,7 +67,7 @@ namespace ZRegex {
     auto kmp = ZRegex::KMPAlgorithm(pattern);
     auto dfa = kmp.asDfa();
     if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
-      GenerateAndCompileCpp(std::move(dfa), "regex");
+      GenerateAndCompileCpp(std::move(dfa), std::string(pattern), "regex");
     } else {
       GenerateAndCompileLLVM(std::move(dfa));
     }
@@ -75,14 +77,20 @@ namespace ZRegex {
   void Codegen::Compile(const char *pattern) {
     if (traverse_ptr != nullptr) return;
     auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
-    dfa->Visualize();
+    // dfa->Visualize();
     spdlog::info("Compiling pattern {}", pattern);
     if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
-      GenerateAndCompileCpp(std::move(dfa), "regex");
+      // GenerateAndCompileCpp(nullptr, std::string(pattern), "regex");
+      GenerateAndCompileCpp(std::move(dfa), std::string(pattern), "regex");
     } else {
+      auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
       GenerateAndCompileLLVM(std::move(dfa));
     }
     JIT();
   }
 
+  void Codegen::CompileForBenchmark(const char *pattern) {
+    traverse_ptr = nullptr;
+    Compile(pattern);
+  }
 }  // namespace ZRegex

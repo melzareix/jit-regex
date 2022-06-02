@@ -53,6 +53,13 @@ namespace ZRegex {
           v[53], v[54], v[55], v[56], v[57], v[58], v[59], v[60], v[61], v[62], v[63]);
     }
 
+    typedef union {
+      __m128i v;
+      unsigned int ui[4];
+      unsigned short int us[8];
+      unsigned char uc[16];
+    } VectorUnion;
+
     static __m512i* preprocess(const char* p, uint32_t m) {
       auto alpha = sizeof(__m512i);
       auto m_prime = m;
@@ -71,7 +78,47 @@ namespace ZRegex {
         }
         b512[i] = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(b[i]));
       }
+      clean_b(b, m);
       return b512;
+    }
+
+    static inline uint16_t wsmatch_128(__m128i a, __m128i b) {
+      VectorUnion Z;
+      Z.ui[0] = Z.ui[1] = Z.ui[2] = Z.ui[3] = 0;
+
+      auto h = _mm_mpsadbw_epu8(a, b, 0x00);
+      auto d = _mm_cmpeq_epi8(h, Z.v);
+      // auto d = _mm_cmpeq_epi16(h, z);
+      return _mm_movemask_epi8(d);
+    }
+
+    static inline uint32_t wsmatch_256(__m256i a, __m256i b) {
+      auto h = _mm256_mpsadbw_epu8(a, b, 0);
+      auto z = _mm256_setzero_si256();
+      return _mm256_cmpeq_epi8_mask(h, z);
+    }
+
+    static uint32_t epsm_b(const char* p, uint32_t m, const char* ss, uint32_t n) {
+      auto alpha = sizeof(__m128i);
+      auto m_prime = std::min((uint64_t)m, alpha / 2);
+      char* p_prime_c = new char[m_prime];
+      memcpy(p_prime_c, p, m_prime);
+      const __m128i p_prime = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p_prime_c));
+
+      for (size_t i = 0; i < n; i += alpha) {
+        const __m128i t = _mm_loadu_si128(reinterpret_cast<const __m128i*>(ss + i));
+        spdlog::warn("t: {} - p_prime: {}", ss + i, p_prime_c);
+        // auto r = wsmatch_128(t, p_prime);
+        auto r = wsmatch_128(p_prime, t);
+        if (r != 0) {
+          spdlog::info("r: {:016b}", r);
+          if (r > 0 && i + get_first_bit_set(r) <= n) {
+            spdlog::info("idx: {} - {}", i + get_first_bit_set(r), (ss + get_first_bit_set(r) + i));
+          }
+        }
+      }
+
+      delete p_prime_c;
     }
 
     static uint32_t epsm_a(const char* p, uint32_t m, const char* ss, uint32_t n, __m512i* b) {
@@ -101,7 +148,7 @@ namespace ZRegex {
       return 0;
     }
 
-    static void clean_b(char** b, uint32_t m) {
+    static inline void clean_b(char** b, uint32_t m) {
       // Delete the array created
       for (int i = 0; i < m; i++)  // To delete the inner arrays
         delete[] b[i];
