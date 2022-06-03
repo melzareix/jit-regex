@@ -6,12 +6,19 @@ A JIT Compiled SQL Compliant Regular Expressions Engine.
 
 ## Usage
 
+### Install deps
+```bash
+sudo apt-get install -y ninja-build
+wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 13
+mkdir -p /workspaces/antlr
+cd /workspaces/antlr && sudo curl -O https://www.antlr.org/download/antlr-4.10.1-complete.jar
+```
 ### Build and run the standalone target
 
 Use the following command to build and run the executable target.
 
 ```bash
-cmake -S standalone -B build/standalone
+CC=g++-11 CXX=g++-11 cmake -GNINJA -DANTLR_EXECUTABLE="/workspaces/antlr/antlr-4.10.1-complete.jar" -S standalone -B build/standalone
 cmake --build build/standalone
 ./build/standalone/ZRegex --help
 ```
@@ -21,9 +28,10 @@ cmake --build build/standalone
 Use the following commands from the project's root directory to run the benchmark suite.
 
 ```bash
-cmake -S test -B build/benchmark
+CC=g++-11 CXX=g++-11 cmake -GNINJA -DANTLR_EXECUTABLE="/workspaces/antlr/antlr-4.10.1-complete.jar" -S benchmark -B build/benchmark
 cmake --build build/benchmark
-CTEST_OUTPUT_ON_FAILURE=1 cmake --build build/benchmark --target benchmark
+cmake --build build/benchmark
+./build/standalone/ZRegex_BM
 ```
 
 ### Run clang-format

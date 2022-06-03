@@ -27,26 +27,7 @@ CPMAddPackage(
         GITHUB_REPOSITORY google/benchmark
         OPTIONS "BENCHMARK_ENABLE_TESTING NO"
 )
-#pcre2
-CPMAddPackage(
-       NAME pcre2
-       GIT_TAG pcre2-10.40
-       GITHUB_REPOSITORY PCRE2Project/pcre2
-)
-#jpcre2
-CPMAddPackage(
-       NAME jpcre2
-       GIT_TAG 10.32.01
-       GITHUB_REPOSITORY jpcre2/jpcre2
-       OPTIONS "PCRE2_STATIC YES"
-)
-# #ctre
-# CPMAddPackage(
-#        NAME ctre
-#        GIT_TAG v3.6
-#        GITHUB_REPOSITORY hanickadot/compile-time-regular-expressions
-# #        OPTIONS "BENCHMARK_ENABLE_TESTING NO"
-# )
+
 #boost-regex
 CPMAddPackage(
   NAME boost
