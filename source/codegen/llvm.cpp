@@ -234,7 +234,7 @@ namespace ZRegex {
       builder->CreateStore(inc, idx);
     }
 
-    spdlog::debug("State{}: Transitions Size: {}", s.id, s.transitions.size());
+    // spdlog::debug("State{}: Transitions Size: {}", s.id, s.transitions.size());
     llvm::BasicBlock* last_block = nullptr;
     for (const auto& t : s.transitions) {
       last_block = GenerateTransition(s.id, t, c, parent, last_block);
@@ -250,7 +250,7 @@ namespace ZRegex {
                                                     llvm::BasicBlock* blk) {
     auto l = t.min, h = t.max;
     auto to = t.to;
-    spdlog::debug("Transition [{}, {}] -> State{}", l, h, to->id);
+    // spdlog::debug("Transition [{}, {}] -> State{}", l, h, to->id);
     auto next_state = llvm::BasicBlock::Create(*context.getContext(),
                                                "s" + std::to_string(from) + "_nt", parent);
     auto true_state = GetOrCreateBlock(to->id, parent);

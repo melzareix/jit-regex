@@ -16,7 +16,7 @@ namespace ZRegex {
     module = llvm::parseIRFile(fmt::format("/tmp/{}.ll", filename_), Err, *context.getContext());
     for (auto &m : module->getFunctionList()) {
       auto fn = m.getName().str();
-      spdlog::debug("Fn {}", fn);
+      // spdlog::debug("Fn {}", fn);
       if (fn.find("traverse") != std::string::npos) {
         fnName = fn;
         break;
@@ -50,7 +50,7 @@ namespace ZRegex {
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error-prone but works for our case here as prototype
     auto cmd = fmt::format(
-        "cd /tmp && clang-13 -std=c++14 -march=native -O2 -emit-llvm {}.cpp -o {}.ll -S", filename,
+        "cd /tmp && clang-13 -std=c++14 -march=native -O3 -emit-llvm {}.cpp -o {}.ll -S", filename,
         filename);
     auto exit_code = system(cmd.c_str());
     if (exit_code) {
@@ -75,10 +75,10 @@ namespace ZRegex {
   }
 
   void Codegen::Compile(const char *pattern) {
-    if (traverse_ptr != nullptr) return;
+    // if (traverse_ptr != nullptr) return;
     auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
     // dfa->Visualize();
-    spdlog::info("Compiling pattern {}", pattern);
+    // spdlog::info("Compiling pattern {}", pattern);
     if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
       // GenerateAndCompileCpp(nullptr, std::string(pattern), "regex");
       GenerateAndCompileCpp(std::move(dfa), std::string(pattern), "regex");

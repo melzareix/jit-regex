@@ -100,7 +100,7 @@ static std::vector<std::string> SplitString(std::string str, std::string delimet
 
 static void BENCH_DFA(benchmark::State& state, ZRegex::CodegenOpts&& opts,
                       const std::string& dataset) {
-  INIT LABEL;
+  LABEL;
   std::string line;
   if (state.range(0) == DFA_LLVM_U8) {
     opts.SetByteDFA(true);
@@ -128,8 +128,9 @@ static void BENCH_DFA(benchmark::State& state, ZRegex::CodegenOpts&& opts,
     opts.SetBackendType(ZRegex::CodegenOpts::CodegenBackendType::CPP);
   }
   ZRegex::Codegen code_generator(opts);
-  while (getline(st, line)) {
-    for (auto _ : state) {
+  for (auto _ : state) {
+    INIT;
+    while (getline(st, line)) {
       try {
         code_generator.CompileForBenchmark(line.c_str());
       } catch (const std::exception& e) {
@@ -138,21 +139,6 @@ static void BENCH_DFA(benchmark::State& state, ZRegex::CodegenOpts&& opts,
         continue;
       }
     }
+    state.counters["Errors"] = errors;
   }
-  state.counters["Errors"] = errors;
-}
-
-static void BENCH_RE2(benchmark::State& state, ZRegex::CodegenOpts&& opts,
-                      const std::string& dataset) {
-  INIT;
-  std::string line;
-  state.SetLabel("RE2");
-  // auto re2_enc = (opts.IsUTF8() || opts.IsUTF32()) ? re2::RE2::DefaultOptions : re2::RE2::Latin1;
-  for (auto _ : state) {
-    while (getline(st, line)) {
-      re2::RE2 p = re2::RE2(line.c_str());
-      errors += p.error().size() > 0 ? 1 : 0;
-    }
-  }
-  state.counters["Errors"] = errors;
 }

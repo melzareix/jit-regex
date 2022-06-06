@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <list>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -25,7 +26,7 @@ namespace ZRegex {
     std::shared_ptr<FiniteAutomatonState> initial_state;
 
     // Destructor
-    ~FiniteAutomaton() { spdlog::debug("FA Destructed!"); }
+    // ~FiniteAutomaton() { spdlog::debug("FA Destructed!"); }
 
     // Constructor
     explicit FiniteAutomaton(std::shared_ptr<FiniteAutomatonState> initial)
@@ -44,10 +45,13 @@ namespace ZRegex {
     [[nodiscard]] std::vector<uint32_t> GetStartPoints() const;
 
     // Operations
-    void Complement();
+    void Complement(bool byte_dfa_utf8);
     fa_st GetLiveStates() const;
     void RemoveDeadStates();
-    void Totalize();
+    void SetStateNumbers();
+    std::map<uint32_t, std::vector<FiniteAutomatonTransition>> GetSortedTransitions();
+    std::vector<std::vector<FiniteAutomatonTransition>> GetSortedTransitionsVector();
+    void Totalize(bool byte_dfa_utf8);
     void Determinize(bool byte_dfa_utf8);
     void Visualize() const;
     void Reduce();
