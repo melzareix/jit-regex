@@ -328,6 +328,7 @@ namespace ZRegex {
       }
       iter++;
     }
+    // spdlog::error("iters: {}", iter);
     this->SetDeterministic(true);
     this->RemoveDeadStates();
   }

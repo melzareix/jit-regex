@@ -13,95 +13,85 @@ def generate_main():
     """
 
 
-def gen_simd_multi(ds, pattern, timescale="ns"):
-    r = f'BENCHMARK_CAPTURE(BENCH_SIMD_MULTIPATTERN, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
-    if timescale != "ns":
-        if timescale == "ms":
-            r += "->Unit(benchmark::kMillisecond)"
-        elif timescale == "us":
-            r += "->Unit(benchmark::kMicrosecond)"
+def add_timescale(r, timescale):
+    if timescale == "ms":
+        r += "->Unit(benchmark::kMillisecond)"
+    elif timescale == "us":
+        r += "->Unit(benchmark::kMicrosecond)"
+    else:
+        r += "->Unit(benchmark::kSecond)"
+    return r
+
+
+def gen_simd_multi(ds, name: str, pattern, timescale="ns"):
+    r = f'BENCHMARK_CAPTURE(BENCH_SIMD_MULTIPATTERN, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
+    r = add_timescale(r, timescale)
     return r + ";\n"
 
 
-def gen_simd(ds, pattern, timescale="ns"):
-    r = f'BENCHMARK_CAPTURE(BENCH_SIMD_INTERPRETTED, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
-    if timescale != "ns":
-        if timescale == "ms":
-            r += "->Unit(benchmark::kMillisecond)"
-        elif timescale == "us":
-            r += "->Unit(benchmark::kMicrosecond)"
-
+def gen_simd(ds, name: str, pattern, timescale="ns"):
+    r = f'BENCHMARK_CAPTURE(BENCH_SIMD_INTERPRETTED, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
+    r = add_timescale(r, timescale)
     return r + ";\n"
 
 
-def gen_kmp(ds, pattern, timescale="ns"):
-    r = f'BENCHMARK_CAPTURE(BENCH_KMP_DFA, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})->DenseRange(KMP_TYPE_LLVM, KMP_TYPE_CPP)'
-    if timescale != "ns":
-        if timescale == "ms":
-            r += "->Unit(benchmark::kMillisecond)"
-        elif timescale == "us":
-            r += "->Unit(benchmark::kMicrosecond)"
+def gen_kmp(ds, name: str, pattern, timescale="ns"):
+    r = f'BENCHMARK_CAPTURE(BENCH_KMP_DFA, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})->DenseRange(KMP_TYPE_LLVM, KMP_TYPE_CPP)'
+    r = add_timescale(r, timescale)
 
-    r2 = f'BENCHMARK_CAPTURE(BENCH_KMP_INTERPRETTED, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
-    if timescale != "ns":
-        if timescale == "ms":
-            r2 += "->Unit(benchmark::kMillisecond)"
-        elif timescale == "us":
-            r2 += "->Unit(benchmark::kMicrosecond)"
+    r2 = f'BENCHMARK_CAPTURE(BENCH_KMP_INTERPRETTED, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
+    r2 = add_timescale(r, timescale)
 
     return r + ";\n" + r2 + ";\n"
 
 
-def gen_dfa(ds, pattern, timescale="ns"):
-    r = f'BENCHMARK_CAPTURE(BENCH_DFA, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})->DenseRange(DFA_LLVM_U8, DFA_CPP_U32)'
-    if timescale != "ns":
-        if timescale == "ms":
-            r += "->Unit(benchmark::kMillisecond)"
-        elif timescale == "us":
-            r += "->Unit(benchmark::kMicrosecond)"
+def gen_dfa(ds, name: str, pattern, timescale="ns"):
+    r = f'BENCHMARK_CAPTURE(BENCH_DFA, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})->DenseRange(DFA_LLVM_U8, DFA_CPP_U32)'
+    r = add_timescale(r, timescale)
 
     return r + ";\n"
 
 
-def gen_re2(ds, pattern: str, timescale="ns"):
+def gen_re2(ds, name: str, pattern: str, timescale="ns"):
     pattern = pattern.replace("%", ".*")
-    print(pattern)
-    r = f'BENCHMARK_CAPTURE(BENCH_RE2, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
-    if timescale != "ns":
-        if timescale == "ms":
-            r += "->Unit(benchmark::kMillisecond)"
-        elif timescale == "us":
-            r += "->Unit(benchmark::kMicrosecond)"
+    r = f'BENCHMARK_CAPTURE(BENCH_RE2, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
+    r = add_timescale(r, timescale)
 
     return r + ";\n"
 
 
-def gen_boost(ds, pattern, timescale="ns"):
-    r = f'BENCHMARK_CAPTURE(BENCH_BOOST, u8"p={pattern}", u8"{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
-    if timescale != "ns":
-        if timescale == "ms":
-            r += "->Unit(benchmark::kMillisecond)"
-        elif timescale == "us":
-            r += "->Unit(benchmark::kMicrosecond)"
+def gen_pcre2(ds, name: str, pattern: str, timescale="ns"):
+    pattern = pattern.replace("%", ".*")
+    r = f'BENCHMARK_CAPTURE(BENCH_PCRE2, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
+    r = add_timescale(r, timescale)
 
     return r + ";\n"
 
 
-def generate_fn(ds: str, timescale: str, libraries: str, pattern: str):
+def gen_boost(ds, name: str, pattern, timescale="ns"):
+    r = f'BENCHMARK_CAPTURE(BENCH_BOOST, "p={name}", "{pattern}", ZRegex::CodegenOpts() /*encoding*/, {ds})'
+    r = add_timescale(r, timescale)
+
+    return r + ";\n"
+
+
+def generate_fn(ds: str, name: str, timescale: str, libraries: str, pattern: str):
     result = ""
     for lib in libraries:
         if lib == "re2":
-            result += gen_re2(ds, pattern, timescale)
+            result += gen_re2(ds, name, pattern, timescale)
         elif lib == "dfa":
-            result += gen_dfa(ds, pattern, timescale)
+            result += gen_dfa(ds, name, pattern, timescale)
         elif lib == "kmp":
-            result += gen_kmp(ds, pattern, timescale)
+            result += gen_kmp(ds, name, pattern, timescale)
         elif lib == "simd_multi":
-            result += gen_simd_multi(ds, pattern, timescale)
+            result += gen_simd_multi(ds, name, pattern, timescale)
         elif lib == "simd":
-            result += gen_simd(ds, pattern, timescale)
+            result += gen_simd(ds, name, pattern, timescale)
+        elif lib == "pcre2":
+            result += gen_pcre2(ds, name, pattern, timescale)
         else:
-            result += gen_boost(ds, pattern, timescale)
+            result += gen_boost(ds, name, pattern, timescale)
     return result
 
 
@@ -115,23 +105,26 @@ def main(file: str):
             suite["name"],
             suite["dataset"],
             suite.get("timescale", "ns"),
-            suite.get("libraries", ["re2", "dfa", "boost", "kmp", "simd"]),
+            suite.get("libraries", ["re2", "pcre2", "dfa"]),
         )
         ds_name = f"DS_{name.upper()}"
         with open(f"../source/suites/{name}.hpp", "w") as f:
             includes.append(f'#include "suites/{name}.hpp"\n')
             f.write(f'#include "bench.h"\n')
             f.write(f'#define {ds_name} "{ds}"\n')
+            i = 0
             for pattern in suite["patterns"]:
                 f.write(
                     generate_fn(
                         ds_name,
+                        f"{i}",
                         timescale=timescale,
                         libraries=libraries,
                         pattern=pattern,
                     )
                     + "\n"
                 )
+                i += 1
         with open(f"../source/main.cpp", "w") as f:
             f.writelines(includes)
             f.write(generate_main() + "\n")

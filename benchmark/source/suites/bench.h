@@ -325,8 +325,9 @@ static void BENCH_PCRE2(benchmark::State& state, const std::string& pattern,
     auto err = pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
 
     while (getline(st, line)) {
-      auto rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0, PCRE2_NO_UTF_CHECK,
-                                match_data, nullptr);
+      int rt = -1;
+      benchmark::DoNotOptimize(rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0,
+                                                    PCRE2_NO_UTF_CHECK, match_data, nullptr));
 
       if (rt >= 0) matches += 1;
       state.counters["Matches"] = matches;
@@ -354,9 +355,9 @@ static void BENCH_DFA(benchmark::State& state, const std::string& pattern,
     opts.SetEncoding(ZRegex::CodegenOpts::DFAEncoding::UTF8);
     opts.SetBackendType(ZRegex::CodegenOpts::CodegenBackendType::CPP);
   }
-  ZRegex::Codegen code_generator(opts);
   for (auto _ : state) {
     INIT;
+    ZRegex::Codegen code_generator(opts);
     code_generator.Compile(result.c_str());
     while (getline(st, line)) {
       benchmark::DoNotOptimize(matches += code_generator.Run(line.c_str()));

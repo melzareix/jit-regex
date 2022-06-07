@@ -39,6 +39,7 @@ namespace ZRegex {
       transitions.insert(to->transitions.begin(), to->transitions.end());
     }
     void SetAccept(bool acc = true) { accept = acc; }
+    static void ResetCounter() { id_counter = 0; }
     void ResetTransitions() { transitions.clear(); }
     std::vector<FiniteAutomatonTransition> GetSortedTransitions() {
       std::vector<FiniteAutomatonTransition> results;

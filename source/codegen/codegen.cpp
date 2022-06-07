@@ -49,9 +49,8 @@ namespace ZRegex {
 
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error-prone but works for our case here as prototype
-    auto cmd = fmt::format(
-        "cd /tmp && clang-13 -std=c++14 -march=native -O3 -emit-llvm {}.cpp -o {}.ll -S", filename,
-        filename);
+    auto cmd = fmt::format("cd /tmp && clang-13 -std=c++14 -O3 -emit-llvm {}.cpp -o {}.ll -S",
+                           filename, filename);
     auto exit_code = system(cmd.c_str());
     if (exit_code) {
       // handle bad exit code
@@ -86,6 +85,7 @@ namespace ZRegex {
       auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
       GenerateAndCompileLLVM(std::move(dfa));
     }
+    FiniteAutomatonState::ResetCounter();
     JIT();
   }
 
