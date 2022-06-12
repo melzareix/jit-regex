@@ -30,11 +30,9 @@
 #include <regex>
 #include <sstream>
 
-// #include "fa/special/epsm.h"
 #include "fa/special/kmp.h"
-#include "fa/special/simd.h"
-// #include "fa/special/smart-epsm.h"
 #include "fa/special/simd-avx512f.h"
+#include "fa/special/simd.h"
 #include "spdlog/cfg/argv.h"
 #include "spdlog/pattern_formatter.h"
 

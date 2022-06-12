@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include "opts.h"
+
 namespace ZRegex {
 
   class JIT {
@@ -49,7 +51,7 @@ namespace ZRegex {
 
   public:
     /// The constructor.
-    explicit JIT(llvm::orc::ThreadSafeContext& ctx);
+    JIT(llvm::orc::ThreadSafeContext& ctx, const CodegenOpts& opts);
 
     /// Get the target machine.
     auto& getTargetMachine() { return *target_machine; }

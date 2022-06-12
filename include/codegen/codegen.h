@@ -10,8 +10,8 @@
 #include <memory>
 #include <string>
 
-#include "../parser/RegExp.h"
 #include "fa/fa.h"
+#include "fa/special/epsm_multi.h"
 #include "jit.h"
 #include "llvm/ExecutionEngine/Orc/Mangling.h"
 #include "llvm/IRReader/IRReader.h"
@@ -46,9 +46,11 @@ namespace ZRegex {
       llvm::InitializeNativeTarget();
       llvm::InitializeNativeTargetAsmPrinter();
       llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
-      jit = std::make_unique<ZRegex::JIT>(context);
+      jit = std::make_unique<ZRegex::JIT>(context, opts);
     }
 
+    void GenerateCodeAndCompile(const std::unique_ptr<FiniteAutomaton> dfa,
+                                const std::string& pattern);
     void Compile(const char* pattern);
     void CompileForBenchmark(const char* pattern);
     void CompileKMP(const char* pattern);

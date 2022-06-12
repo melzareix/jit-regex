@@ -19,14 +19,14 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
+#include <llvm/Passes/PassBuilder.h>
 
 namespace ZRegex {
   class CodegenOpts {
   public:
     enum CodegenBackendType { LLVM, CPP };
     enum DFAEncoding { UTF8, ASCII };
-    enum OptimizationLevel { O1, O2, O3 };
-    enum AutomatonType { DFA, PARABIX };
+    enum OptimizationLevel { O0, O1, O2, O3, Os, Oz };
     CodegenOpts(const CodegenBackendType& backendtype = LLVM, const DFAEncoding& encoding = UTF8,
                 const OptimizationLevel& olevel = O2, const bool& utf8_byte_dfa = false)
         : backendtype_(backendtype),
@@ -36,14 +36,34 @@ namespace ZRegex {
 
     CodegenBackendType GetBackendType() const { return backendtype_; };
     DFAEncoding GetEncoding() const { return encoding_; };
-    bool IsByteDFA() { return utf8_byte_dfa_; }
-    bool IsUTF32() { return encoding_ == UTF8 && !IsByteDFA(); }
-    bool IsUTF8() { return IsByteDFA() && encoding_ == UTF8; }
-    bool IsAscii() { return encoding_ == ASCII; }
+    bool IsByteDFA() const { return utf8_byte_dfa_; }
+    bool IsUTF32() const { return encoding_ == UTF8 && !IsByteDFA(); }
+    bool IsUTF8() const { return IsByteDFA() && encoding_ == UTF8; }
+    bool IsAscii() const { return encoding_ == ASCII; }
 
     void SetEncoding(const DFAEncoding& encoding) { encoding_ = encoding; }
     void SetBackendType(const CodegenBackendType& backendType) { backendtype_ = backendType; }
     void SetByteDFA(const bool& byteDfa) { utf8_byte_dfa_ = byteDfa; }
+
+    std::string getOptimizationLevelString() const {
+      if (optimization_level_ == O0) return "O0";
+      if (optimization_level_ == O1) return "O1";
+      if (optimization_level_ == O2) return "O2";
+      if (optimization_level_ == O3) return "O3";
+      if (optimization_level_ == Oz) return "Oz";
+      if (optimization_level_ == Os) return "Os";
+      return "";
+    }
+
+    llvm::PassBuilder::OptimizationLevel getOptimizationLevelforLLVM() const {
+      if (optimization_level_ == O0) return llvm::PassBuilder::OptimizationLevel::O0;
+      if (optimization_level_ == O1) return llvm::PassBuilder::OptimizationLevel::O1;
+      if (optimization_level_ == O2) return llvm::PassBuilder::OptimizationLevel::O2;
+      if (optimization_level_ == O3) return llvm::PassBuilder::OptimizationLevel::O3;
+      if (optimization_level_ == Oz) return llvm::PassBuilder::OptimizationLevel::Oz;
+      if (optimization_level_ == Os) return llvm::PassBuilder::OptimizationLevel::Os;
+      return llvm::PassBuilder::OptimizationLevel::O2;
+    }
 
   private:
     CodegenBackendType backendtype_;

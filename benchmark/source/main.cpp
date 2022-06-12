@@ -1,6 +1,7 @@
 // #include "suites/compile/common.hpp"
 // #include "suites/compile/sql.hpp"
-#include "suites/regex_dna.hpp"
+// #include "suites/regex_dna.hpp"
+#include "suites/tpchorders.hpp"
 // #include "suites/spark_logs.hpp"
 
 int main(int argc, char** argv) {

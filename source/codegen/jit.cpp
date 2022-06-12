@@ -10,7 +10,7 @@
 
 namespace ZRegex {
 
-  void optimizeModule(llvm::Module& module) {
+  void optimizeModule(llvm::Module& module, llvm::PassBuilder::OptimizationLevel lvl) {
     if (module.getName() != "rgx_module") return;
     // Create the analysis managers.
     llvm::LoopAnalysisManager LAM;
@@ -37,13 +37,12 @@ namespace ZRegex {
 
     // Create the pass manager.
     // This one corresponds to a typical -O2 optimization pipeline.
-    llvm::ModulePassManager MPM
-        = PB.buildPerModuleDefaultPipeline(llvm::PassBuilder::OptimizationLevel::O2);
+    spdlog::debug("{}", lvl == llvm::PassBuilder::OptimizationLevel::O0);
+    llvm::ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(lvl);
 
     PB.registerPipelineStartEPCallback(
         [&](llvm::ModulePassManager& MPM, llvm::PassBuilder::OptimizationLevel Level) {
-          MPM.addPass(PB.buildInlinerPipeline(llvm::PassBuilder::OptimizationLevel::O2,
-                                              llvm::ThinOrFullLTOPhase::None));
+          MPM.addPass(PB.buildInlinerPipeline(lvl, llvm::ThinOrFullLTOPhase::None));
         });
 
     if (spdlog::get_level() == SPDLOG_LEVEL_DEBUG) {
@@ -58,7 +57,7 @@ namespace ZRegex {
     }
   }
 
-  JIT::JIT(llvm::orc::ThreadSafeContext& ctx)
+  JIT::JIT(llvm::orc::ThreadSafeContext& ctx, const CodegenOpts& opts)
       : target_machine(llvm::EngineBuilder().selectTarget()),
         data_layout(target_machine->createDataLayout()),
         execution_session(std::make_unique<llvm::orc::UnsupportedExecutorProcessControl>()),
@@ -67,12 +66,12 @@ namespace ZRegex {
                      []() { return std::make_unique<llvm::SectionMemoryManager>(); }),
         compile_layer(execution_session, object_layer,
                       std::make_unique<llvm::orc::SimpleCompiler>(*target_machine)),
-        optimize_layer(
-            execution_session, compile_layer,
-            [this](llvm::orc::ThreadSafeModule m, const llvm::orc::MaterializationResponsibility&) {
-              optimizeModule(*m.getModuleUnlocked());
-              return m;
-            }),
+        optimize_layer(execution_session, compile_layer,
+                       [this, opts](llvm::orc::ThreadSafeModule m,
+                                    const llvm::orc::MaterializationResponsibility&) {
+                         optimizeModule(*m.getModuleUnlocked(), opts.getOptimizationLevelforLLVM());
+                         return m;
+                       }),
         mainDylib(cantFail(execution_session.createJITDylib("<main>"), "createJITDylib failed")) {
     // Lookup symbols in host process
     auto generator = llvm::cantFail(llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(
