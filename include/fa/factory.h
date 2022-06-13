@@ -219,6 +219,7 @@ namespace ZRegex {
       q->chr = b1;
       q->SetAccept();
       fa->SetDeterministic(true);
+      auto xx = fa.get();
       return fa;
     }
 

@@ -4,6 +4,7 @@
 
 #include "Engine.h"
 #include "cxxopts.hpp"
+#include "fa/special/epsm_multi.h"
 #include "fa/special/kmp.h"
 #include "fa/special/simd.h"
 #include "helpers/utf8.h"

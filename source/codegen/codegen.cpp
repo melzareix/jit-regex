@@ -90,6 +90,7 @@ namespace ZRegex {
     if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
       GenerateAndCompileCpp(std::move(dfa), std::string(pattern), "regex");
     } else {
+      auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
       GenerateAndCompileLLVM(std::move(dfa));
     }
     FiniteAutomatonState::ResetCounter();
