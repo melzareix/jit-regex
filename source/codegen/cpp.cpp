@@ -3,9 +3,10 @@
 //
 #include "codegen/cpp.h"
 
+#include <sstream>
 #include <vector>
 
-#include "codegen/cpp-simd.h"
+// #include "codegen/cpp-simd.h"
 #include "fa/fa.h"
 
 // #define DEBUG 1

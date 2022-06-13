@@ -61,8 +61,8 @@ character: EscapeChar specialChar | regularCharacter;
 
 characterClass:
 	Underscore																# anyChar
-	| CharacterClassStart positive = classMember+ CharacterClassEnd			# ccPositive
-	| CharacterClassStart Caret negative = classMember+ CharacterClassEnd	# ccNegative;
+	| CharacterClassStart Caret negative = classMember+ CharacterClassEnd	# ccNegative
+	| CharacterClassStart positive = classMember+ CharacterClassEnd			# ccPositive;
 
 classMember:
 	range

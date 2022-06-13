@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "fa/fa.h"
@@ -14,6 +15,14 @@
 #include "helpers/utf8range.h"
 
 typedef std::vector<std::vector<uint8_t>> utf8_range;
+typedef std::tuple<std::shared_ptr<ZRegex::FiniteAutomatonState>,
+                   std::shared_ptr<ZRegex::FiniteAutomatonState>,
+                   std::shared_ptr<ZRegex::FiniteAutomatonState>>
+    state_tuple;
+typedef std::tuple<std::shared_ptr<ZRegex::FiniteAutomatonState>,
+                   std::shared_ptr<ZRegex::FiniteAutomatonState>>
+    state_pair;
+
 namespace ZRegex {
   struct FAFactory {
     static std::unique_ptr<FiniteAutomaton> RangeDFA(std::vector<utf8_range> ranges) {
@@ -36,7 +45,7 @@ namespace ZRegex {
       std::vector<std::vector<std::vector<uint8_t>>> ranges;
       while (range_.hasNext()) {
         ranges.push_back(range_.NextRange());
-        spdlog::warn("{} - {}", ranges.back()[0][0], ranges.back()[0][1]);
+        // spdlog::warn("{} - {}", ranges.back()[0][0], ranges.back()[0][1]);
       }
       return std::move(FAFactory::RangeDFA(ranges));
     }
@@ -216,8 +225,53 @@ namespace ZRegex {
 
     static std::unique_ptr<FiniteAutomaton> Intersect(std::unique_ptr<FiniteAutomaton> a,
                                                       std::unique_ptr<FiniteAutomaton> b) {
-      //      auto fa = std::make_unique<FiniteAutomaton>();
-      //      auto t1 = a->GetT
+      auto transitions1 = a->GetSortedTransitionsVector();
+      auto transitions2 = b->GetSortedTransitionsVector();
+
+      auto is = std::make_shared<FiniteAutomatonState>();
+      auto fa = std::make_unique<FiniteAutomaton>(is);
+      std::map<state_pair, std::shared_ptr<ZRegex::FiniteAutomatonState>> new_states;
+      std::list<state_tuple> worklist;
+      auto sp = std::make_tuple(is, a->initial_state, b->initial_state);
+
+      worklist.push_back(sp);
+      auto abtuple = std::make_tuple(a->initial_state, b->initial_state);
+      new_states[abtuple] = is;
+
+      while (!worklist.empty()) {
+        auto p = worklist.front();
+        worklist.pop_front();
+
+        // accept if both accept
+        std::get<0>(p)->SetAccept(std::get<1>(p)->accept && std::get<2>(p)->accept);
+
+        auto t1 = transitions1[std::get<1>(p)->id];
+        auto t2 = transitions2[std::get<2>(p)->id];
+
+        for (uint32_t n1 = 0, b2 = 0; n1 < t1.size(); n1++) {
+          while (b2 < t2.size() && t2[b2].max < t1[n1].min) b2++;
+          for (int n2 = b2; n2 < t2.size() && t1[n1].max >= t2[n2].min; n2++) {
+            if (t2[n2].max >= t1[n1].min) {
+              auto q = std::make_tuple(t1[n1].to, t2[n2].to);
+              auto notfound = new_states.find(q) == new_states.end();
+              auto ns = std::make_shared<FiniteAutomatonState>();
+              if (notfound) {
+                worklist.push_back(std::make_tuple(ns, t1[n1].to, t2[n2].to));
+                new_states[q] = ns;
+              } else {
+                ns = new_states[q];
+              }
+              uint32_t min = t1[n1].min > t2[n2].min ? t1[n1].min : t2[n2].min;
+              uint32_t max = t1[n1].max < t2[n2].max ? t1[n1].max : t2[n2].max;
+              std::get<0>(p)->AddTransition(min, max, ns);
+            }
+          }
+        }
+      }
+      fa->SetDeterministic(a->deterministic && b->deterministic);
+      fa->RemoveDeadStates();
+
+      return fa;
     }
 
     // Named Char classes

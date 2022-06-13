@@ -92,14 +92,15 @@ namespace ZRegex {
   /**
    * Operations.
    */
-  void FiniteAutomaton::Complement() {
-    this->Determinize(false);
-    this->Totalize();
+  void FiniteAutomaton::Complement(bool byte_dfa_utf8) {
+    this->Determinize(byte_dfa_utf8);
+    this->Totalize(byte_dfa_utf8);
     for (const auto& s : this->GetStates()) {
-      s->SetAccept(false);
+      s->SetAccept(!s->accept);
     }
     this->RemoveDeadStates();
   }
+
   void FiniteAutomaton::Visualize() const {
     std::ofstream fs("/tmp/regex.dot");
     fs << "digraph Automaton {" << std::endl;
@@ -211,7 +212,52 @@ namespace ZRegex {
     }
     Reduce();
   }
-  void FiniteAutomaton::Totalize() {}
+  std::map<uint32_t, std::vector<FiniteAutomatonTransition>>
+  FiniteAutomaton::GetSortedTransitions() {
+    std::map<uint32_t, std::vector<FiniteAutomatonTransition>> transitions;
+    for (auto& s : GetStates()) {
+      transitions[s->id] = s->GetSortedTransitions();
+    }
+    return transitions;
+  }
+
+  std::vector<std::vector<FiniteAutomatonTransition>>
+  FiniteAutomaton::GetSortedTransitionsVector() {
+    SetStateNumbers();
+    auto states = GetStates();
+    std::vector<std::vector<FiniteAutomatonTransition>> transitions(states.size());
+    for (auto& s : GetStates()) {
+      transitions[s->id] = s->GetSortedTransitions();
+    }
+    return transitions;
+  }
+
+  void FiniteAutomaton::Totalize(bool byte_dfa_utf8) {
+    auto s = std::make_shared<FiniteAutomatonState>();
+    uint32_t max;
+    if (byte_dfa_utf8) {
+      max = Utf8::MAX_TRANS_BYTE;
+    } else {
+      max = Utf8::MAX_TRANS;
+    }
+
+    s->AddTransition(0, max, s);
+    auto states = this->GetStates();
+    for (const auto& p : states) {
+      uint32_t maxi = 0;
+      for (auto t : p->GetSortedTransitions()) {
+        if (t.min > maxi) {
+          p->AddTransition(maxi, t.min - 1, s);
+        }
+        if (t.max + 1 > maxi) {
+          maxi = t.max + 1;
+        }
+      }
+      if (maxi <= max) {
+        p->AddTransition(maxi, max, s);
+      }
+    }
+  }
   void FiniteAutomaton::Determinize(bool byte_dfa_utf8) {
     if (this->deterministic) return;
     auto points = GetStartPoints();
@@ -282,13 +328,22 @@ namespace ZRegex {
       }
       iter++;
     }
+    // spdlog::error("iters: {}", iter);
     this->SetDeterministic(true);
     this->RemoveDeadStates();
   }
 
+  void FiniteAutomaton::SetStateNumbers() {
+    auto states = GetStates();
+    auto number = 0;
+    for (auto& s : states) {
+      s->id = number++;
+    }
+  }
   // Copy Constructor
+
   FiniteAutomaton::FiniteAutomaton(const FiniteAutomaton& a) {
-    spdlog::debug("FA Copy Constructor");
+    // spdlog::debug("FA Copy Constructor");
     deterministic = a.deterministic;
     std::unordered_map<uint32_t, std::shared_ptr<FiniteAutomatonState>> map;
     auto states = a.GetStates();

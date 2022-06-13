@@ -32,7 +32,6 @@
 #include <regex>
 #include <sstream>
 
-// #include "fa/special/epsm.h"
 #include "fa/special/epsm_multi.h"
 #include "fa/special/kmp.h"
 #include "fa/special/simd-avx512f.h"
@@ -115,25 +114,24 @@ static std::vector<std::string> SplitString(std::string str, std::string delimet
   return splittedStrings;
 }
 
-// TODO MORE THAN 2 PATTERNS
-static void BENCH_SIMD_EPSM_SMART(benchmark::State& state, const std::string& pattern,
-                                  ZRegex::CodegenOpts&& opts, const std::string& dataset) {
-  INIT;
-  std::string line;
-  // assert(pattern.size() <= 32);  // only good if pattern length is small
-  state.SetLabel("SIMD EPSMA_SMART Regex");
-  auto patterns = SplitString(pattern, "%");
-  auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
-  auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
-  for (auto _ : state) {
-    while (getline(st, line)) {
-      auto p1 = epsm1.epsm2_search_find_first(line.c_str(), line.size());
-      auto p2 = epsm2.epsm2_search_find_last(line.c_str(), line.size());
-      if (p1 != -1 && p2 != -1 && p2 >= p1) matches += 1;
-    }
-  }
-  state.counters["Matches"] = matches;
-}
+// static void BENCH_SIMD_EPSM_SMART(benchmark::State& state, const std::string& pattern,
+//                                   ZRegex::CodegenOpts&& opts, const std::string& dataset) {
+//   INIT;
+//   std::string line;
+//   // assert(pattern.size() <= 32);  // only good if pattern length is small
+//   state.SetLabel("SIMD EPSMA_SMART Regex");
+//   auto patterns = SplitString(pattern, "%");
+//   auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
+//   auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
+//   for (auto _ : state) {
+//     while (getline(st, line)) {
+//       auto p1 = epsm1.epsm2_search_find_first(line.c_str(), line.size());
+//       auto p2 = epsm2.epsm2_search_find_last(line.c_str(), line.size());
+//       if (p1 != -1 && p2 != -1 && p2 >= p1) matches += 1;
+//     }
+//   }
+//   state.counters["Matches"] = matches;
+// }
 
 static void BENCH_SIMD_EPSM(benchmark::State& state, const std::string& pattern,
                             ZRegex::CodegenOpts&& opts, const std::string& dataset) {
@@ -163,35 +161,33 @@ static void BENCH_SIMD_MULTIPATTERN(benchmark::State& state, const std::string& 
   std::string line;
   state.SetLabel("SIMD MULTIPATTERN Regex");
   auto patterns = SplitString(pattern, "%");
-  auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
-  auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
-  // auto b1 = epsm1.preprocess();
-  // auto b2 = epsm2.preprocess();
 
   for (auto _ : state) {
+    auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
+    auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
+    INIT;
     while (getline(st, line)) {
       auto p1 = epsm1.epsma_elz_early(line.c_str(), line.size());
       auto p2 = epsm2.epsma_elz(line.c_str(), line.size());
       if (p1 != -1 && p2 != -1 && p2 >= p1) matches += 1;
     }
+    state.counters["Matches"] = matches;
   }
-  state.counters["Matches"] = matches;
 }
 
 static void BENCH_BOOST(benchmark::State& state, const std::string& pattern,
                         ZRegex::CodegenOpts&& opts, const std::string& dataset) {
-  INIT;
   std::string line;
   state.SetLabel("Boost Regex");
   auto result = ".*(" + pattern + ").*";
-  boost::regex* regex = nullptr;
   for (auto _ : state) {
-    if (regex == nullptr) regex = new boost::regex(result);
+    INIT;
+    auto regex = boost::regex(result);
     while (getline(st, line)) {
-      benchmark::DoNotOptimize(matches += boost::regex_match(line.c_str(), *regex) ? 1 : 0);
+      benchmark::DoNotOptimize(matches += boost::regex_match(line.c_str(), regex) ? 1 : 0);
     }
+    state.counters["Matches"] = matches;
   }
-  state.counters["Matches"] = matches;
 }
 
 static void BENCH_STDLIB(benchmark::State& state, const std::string& pattern,
@@ -212,18 +208,17 @@ static void BENCH_STDLIB(benchmark::State& state, const std::string& pattern,
 
 static void BENCH_RE2(benchmark::State& state, const std::string& pattern,
                       ZRegex::CodegenOpts&& opts, const std::string& dataset) {
-  INIT;
   std::string line;
   state.SetLabel("RE2");
   auto re2_enc = (opts.IsUTF8() || opts.IsUTF32()) ? re2::RE2::DefaultOptions : re2::RE2::Latin1;
-  re2::RE2* p = nullptr;
   for (auto _ : state) {
-    if (p == nullptr) p = new re2::RE2(pattern, re2_enc);
+    auto p = re2::RE2(pattern, re2_enc);
+    INIT;
     while (getline(st, line)) {
-      benchmark::DoNotOptimize(matches += re2::RE2::PartialMatch(line, *p));
+      benchmark::DoNotOptimize(matches += re2::RE2::PartialMatch(line, p));
     }
+    state.counters["Matches"] = matches;
   }
-  state.counters["Matches"] = matches;
 }
 
 static void BENCH_SIMD_INTERPRETTED(benchmark::State& state, const std::string& pattern,
@@ -289,16 +284,17 @@ static void BENCH_PCRE2_DFA(benchmark::State& state, const std::string& pattern,
   int errorcode;
   PCRE2_SIZE erroroffset;
   PCRE2_SPTR p = (PCRE2_SPTR)(pattern.c_str());
-  re = pcre2_compile(p, pattern.size(), PCRE2_UCP | PCRE2_UTF, &errorcode, &erroroffset, nullptr);
-  match_data = pcre2_match_data_create(0, nullptr);
   // match_data = pcre2_match_data_create(re, nullptr);
   int dfa_workspace[100];
 
   for (auto _ : state) {
     while (getline(st, line)) {
-      // auto rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0,
-      // PCRE2_NO_UTF_CHECK,
-      //                           match_data, nullptr);
+      if (re == nullptr) {
+        match_data = pcre2_match_data_create(0, nullptr);
+        re = pcre2_compile(p, pattern.size(), PCRE2_UCP | PCRE2_UTF, &errorcode, &erroroffset,
+                           nullptr);
+      }
+
       auto rt = pcre2_dfa_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0,
                                 PCRE2_NO_UTF_CHECK | PCRE2_DFA_SHORTEST, match_data, nullptr,
                                 dfa_workspace, 100);
@@ -312,31 +308,33 @@ static void BENCH_PCRE2_DFA(benchmark::State& state, const std::string& pattern,
 
 static void BENCH_PCRE2(benchmark::State& state, const std::string& pattern,
                         ZRegex::CodegenOpts&& opts, const std::string& dataset) {
-  INIT;
   std::string line;
   state.SetLabel("PCRE2");
-  pcre2_code* re = nullptr;
-  pcre2_match_data* match_data = nullptr;
-
-  int errorcode;
-  PCRE2_SIZE erroroffset;
-  PCRE2_SPTR p = (PCRE2_SPTR)(pattern.c_str());
-  re = pcre2_compile(p, pattern.size(), PCRE2_UCP | PCRE2_UTF, &errorcode, &erroroffset, nullptr);
-  match_data = pcre2_match_data_create_from_pattern(re, nullptr);
-  auto err = pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
   for (auto _ : state) {
+    INIT;
+    pcre2_code* re = nullptr;
+    pcre2_match_data* match_data = nullptr;
+
+    int errorcode;
+    PCRE2_SIZE erroroffset;
+    PCRE2_SPTR p = (PCRE2_SPTR)(pattern.c_str());
+    re = pcre2_compile(p, pattern.size(), PCRE2_UCP | PCRE2_UTF, &errorcode, &erroroffset, nullptr);
+    match_data = pcre2_match_data_create_from_pattern(re, nullptr);
+    auto err = pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+
     while (getline(st, line)) {
-      auto rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0, PCRE2_NO_UTF_CHECK,
-                                match_data, nullptr);
+      int rt = -1;
+      benchmark::DoNotOptimize(rt = pcre2_jit_match(re, (PCRE2_SPTR)(line.c_str()), line.size(), 0,
+                                                    PCRE2_NO_UTF_CHECK, match_data, nullptr));
 
       if (rt >= 0) matches += 1;
+      state.counters["Matches"] = matches;
     }
-    state.counters["Matches"] = matches;
   }
 }
 static void BENCH_DFA(benchmark::State& state, const std::string& pattern,
                       ZRegex::CodegenOpts&& opts, const std::string& dataset) {
-  INIT LABEL APPLY_PARTIAL;
+  LABEL APPLY_PARTIAL;
   std::string line;
   if (state.range(0) == DFA_LLVM_U8) {
     opts.SetByteDFA(true);
@@ -355,12 +353,13 @@ static void BENCH_DFA(benchmark::State& state, const std::string& pattern,
     opts.SetEncoding(ZRegex::CodegenOpts::DFAEncoding::UTF8);
     opts.SetBackendType(ZRegex::CodegenOpts::CodegenBackendType::CPP);
   }
-  ZRegex::Codegen code_generator(opts);
   for (auto _ : state) {
+    INIT;
+    ZRegex::Codegen code_generator(opts);
     code_generator.Compile(result.c_str());
     while (getline(st, line)) {
       benchmark::DoNotOptimize(matches += code_generator.Run(line.c_str()));
     }
+    state.counters["Matches"] = matches;
   }
-  state.counters["Matches"] = matches;
 }

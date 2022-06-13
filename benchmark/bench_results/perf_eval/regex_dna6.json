@@ -1,0 +1,106 @@
+{
+  "context": {
+    "date": "2022-06-12T19:35:48+00:00",
+    "host_name": "atkemper4",
+    "executable": "/home/elzarei/jit-regex/build/benchmark/ZRegex_BM",
+    "num_cpus": 20,
+    "mhz_per_cpu": 3436,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 1048576,
+        "num_sharing": 2
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 14417920,
+        "num_sharing": 20
+      }
+    ],
+    "load_avg": [0.2,0.26,0.36],
+    "library_build_type": "debug"
+  },
+  "benchmarks": [
+    {
+      "name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"_mean",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"",
+      "run_type": "aggregate",
+      "repetitions": 5,
+      "threads": 1,
+      "aggregate_name": "mean",
+      "aggregate_unit": "time",
+      "iterations": 5,
+      "real_time": 5.8198853751475170e+01,
+      "cpu_time": 5.8198915999999997e+01,
+      "time_unit": "ms",
+      "Matches": 3.2000000000000000e+01,
+      "label": "RE2"
+    },
+    {
+      "name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"_median",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"",
+      "run_type": "aggregate",
+      "repetitions": 5,
+      "threads": 1,
+      "aggregate_name": "median",
+      "aggregate_unit": "time",
+      "iterations": 5,
+      "real_time": 5.8365678922696546e+01,
+      "cpu_time": 5.8365359727272711e+01,
+      "time_unit": "ms",
+      "Matches": 3.2000000000000000e+01,
+      "label": "RE2"
+    },
+    {
+      "name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"_stddev",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"",
+      "run_type": "aggregate",
+      "repetitions": 5,
+      "threads": 1,
+      "aggregate_name": "stddev",
+      "aggregate_unit": "time",
+      "iterations": 5,
+      "real_time": 5.3486294486139729e-01,
+      "cpu_time": 5.3488990997826469e-01,
+      "time_unit": "ms",
+      "Matches": 0.0000000000000000e+00,
+      "label": "RE2"
+    },
+    {
+      "name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"_cv",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "BENCH_RE2/u8\"p=agggtaaa|tttaccct\"",
+      "run_type": "aggregate",
+      "repetitions": 5,
+      "threads": 1,
+      "aggregate_name": "cv",
+      "aggregate_unit": "percentage",
+      "iterations": 5,
+      "real_time": 9.1902659654674070e-03,
+      "cpu_time": 9.1907194625113747e-03,
+      "time_unit": "ms",
+      "Matches": 0.0000000000000000e+00,
+      "label": "RE2"
+    }

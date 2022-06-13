@@ -157,6 +157,36 @@ namespace ZRegex {
     }
     antlrcpp::Any visitCcNegative(RegexParser::CcNegativeContext *context) override {
       // negation is equivalent to (.&~(cc))
+      std::vector<std::unique_ptr<FiniteAutomaton>> automatons;
+      for (const auto &expr : context->classMember()) {
+        auto expr_nfa = std::move(expr->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
+        automatons.push_back(std::move(expr_nfa));
+      }
+
+      auto fa1 = FAFactory::UnionAll(automatons);
+      fa1->Complement(byte_dfa_utf8_);
+      fa1->Visualize();
+
+      auto fa2 = ZRegex::FAFactory::AnyChar(byte_dfa_utf8_);
+      fa2->Visualize();
+      return FAFactory::Intersect(std::move(fa2), std::move(fa1));
+    }
+
+    antlrcpp::Any visitCcEscapedChar(RegexParser::CcEscapedCharContext *context) {
+      if (byte_dfa_utf8_) {
+        if (context->value->getText() == "n") {
+          return ZRegex::FAFactory::ByteAutomaton("\n");
+        }
+        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
+      }
+      return ZRegex::FAFactory::StringAutomaton(context->value->getText());
+    }
+
+    antlrcpp::Any visitCcUnescapedChar(RegexParser::CcUnescapedCharContext *context) {
+      if (byte_dfa_utf8_) {
+        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
+      }
+      return ZRegex::FAFactory::StringAutomaton(context->value->getText());
     }
 
     antlrcpp::Any visitCcEscapedChar(RegexParser::CcEscapedCharContext *context) {

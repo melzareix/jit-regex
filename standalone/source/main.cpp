@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "Engine.h"
 #include "cxxopts.hpp"
 #include "fa/special/epsm_multi.h"
 #include "fa/special/kmp.h"
@@ -12,6 +13,16 @@
 #include "spdlog/spdlog.h"
 using namespace ZRegex;
 
+CodegenOpts::OptimizationLevel parseOptimizationLevel(std::string& level) {
+  if (level == "O0") return CodegenOpts::OptimizationLevel::O0;
+  if (level == "O1") return CodegenOpts::OptimizationLevel::O1;
+  if (level == "O2") return CodegenOpts::OptimizationLevel::O2;
+  if (level == "O3") return CodegenOpts::OptimizationLevel::O3;
+  if (level == "Oz") return CodegenOpts::OptimizationLevel::Oz;
+  if (level == "Os") return CodegenOpts::OptimizationLevel::Os;
+  spdlog::warn("Wrong optimization level defaulting to O2.");
+  return CodegenOpts::OptimizationLevel::O2;
+}
 auto main(int argc, char** argv) -> int {
   spdlog::cfg::load_argv_levels(argc, argv);
 
@@ -20,7 +31,8 @@ auto main(int argc, char** argv) -> int {
       "b,backend", "Backend", cxxopts::value<std::string>())(
       "a,ascii", "Support utf-8 encoding", cxxopts::value<bool>()->default_value("false"))(
       "x,bytedfa", "UTF-8 ByteDFA encoding", cxxopts::value<bool>()->default_value("false"))(
-      "h,help", "Print help");
+      "o,optimizationlevel", "Backend Optimization Level",
+      cxxopts::value<std::string>()->default_value("O2"))("h,help", "Print help");
   auto result = options.parse(argc, argv);
 
   if (result.count("help")) {
@@ -30,45 +42,28 @@ auto main(int argc, char** argv) -> int {
 
   auto rgx = result["regex"].as<std::string>();
   auto backend = result["backend"].as<std::string>();
+  auto optLevelstr = result["optimizationlevel"].as<std::string>();
   auto bytedfa = result["bytedfa"].as<bool>();
 
   auto isAscii = result["ascii"].as<bool>();
   auto encoding = isAscii ? CodegenOpts::DFAEncoding::ASCII : CodegenOpts::DFAEncoding::UTF8;
   auto backend_type = backend == "cpp" ? CodegenOpts::CodegenBackendType::CPP
                                        : CodegenOpts::CodegenBackendType::LLVM;
-  auto optimizationLevel = CodegenOpts::OptimizationLevel::O3;
+  auto optimizationLevel = parseOptimizationLevel(optLevelstr);
 
   auto opts = CodegenOpts(backend_type, encoding, optimizationLevel, bytedfa);
-  spdlog::warn("Compiling Pattern {} - Options [Backend={}, Unicode={}, byteDFA={}]", rgx, backend,
-               !isAscii, bytedfa);
-  ZRegex::Codegen code_generator(opts);
-  code_generator.Compile(rgx.c_str());
+  spdlog::warn(
+      "Compiling Pattern {} - Options [Backend={}, Unicode={}, byteDFA={}, optimizationLevel={}]",
+      rgx, backend, !isAscii, bytedfa, opts.getOptimizationLevelString());
+
+  Engine engine(rgx, opts);
   spdlog::warn("Pattern Compiled {}", rgx);
 
   std::string s;
-  // std::string p = "ab";
-  // std::string sx = "aaaaaaaaaaaaaaaaaaaaaaxlaaaaaaaaaaaaaaaaaaaaaaabx";
-
-  // auto haystack = sx.c_str(), needle = p.c_str();
-  // auto barr = ZRegex::SIMDSubstringMatch::preprocess(needle, p.size());
-  // auto r = ZRegex::SIMDSubstringMatch::epsm_a(needle, p.size(), haystack, sx.size(), barr);
-  // ZRegex::SIMDSubstringMatch::clean_b(barr, p.size());
-  // ZRegex::SIMDSubstringMatch::sse4_strstr_anysize(sx, 10, p, 5);
-
-  // auto needle = rgx.c_str();
-  // auto barr = ZRegex::SIMDSubstringMatch::preprocess(needle, rgx.size());
-  // epsm_process(rgx.c_str(), rgx.size());
-  auto epsm1 = ZRegex::EPSMMatcher(rgx.c_str(), rgx.size());
   while (getline(std::cin, s)) {
     auto z = s.c_str();
-    spdlog::error("EPSM Last Result: {}", epsm1.epsm2_search_find_last(z, s.size()));
-    spdlog::error("EPSM First Result: {}", epsm1.epsm2_search_find_first(z, s.size()));
-    // spdlog::debug("Run Result : {}", code_generator.Run(z));
-    // auto r = ZRegex::SIMDSubstringMatch::epsm_a(needle, rgx.size(), z, s.size(), barr);
-    // auto r = ZRegex::SIMDSubstringMatch::epsm_a_alternative(needle, rgx.size(), z, s.size(),
-    // barr);
-    auto rr = code_generator.Run(z);
-    spdlog::info("Results: {}", rr);
+    auto rr = engine.Run(z);
+    spdlog::info("Matching Result: {}", rr);
   }
 
   return 0;

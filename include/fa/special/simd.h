@@ -98,29 +98,6 @@ namespace ZRegex {
       return _mm256_cmpeq_epi8_mask(h, z);
     }
 
-    static uint32_t epsm_b(const char* p, uint32_t m, const char* ss, uint32_t n) {
-      auto alpha = sizeof(__m128i);
-      auto m_prime = std::min((uint64_t)m, alpha / 2);
-      char* p_prime_c = new char[m_prime];
-      memcpy(p_prime_c, p, m_prime);
-      const __m128i p_prime = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p_prime_c));
-
-      for (size_t i = 0; i < n; i += alpha) {
-        const __m128i t = _mm_loadu_si128(reinterpret_cast<const __m128i*>(ss + i));
-        spdlog::warn("t: {} - p_prime: {}", ss + i, p_prime_c);
-        // auto r = wsmatch_128(t, p_prime);
-        auto r = wsmatch_128(p_prime, t);
-        if (r != 0) {
-          spdlog::info("r: {:016b}", r);
-          if (r > 0 && i + get_first_bit_set(r) <= n) {
-            spdlog::info("idx: {} - {}", i + get_first_bit_set(r), (ss + get_first_bit_set(r) + i));
-          }
-        }
-      }
-
-      delete p_prime_c;
-    }
-
     static uint32_t epsm_a(const char* p, uint32_t m, const char* ss, uint32_t n, __m512i* b) {
       auto alpha = sizeof(__m512i);
       auto m_prime = m;

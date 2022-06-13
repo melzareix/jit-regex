@@ -1,10 +1,10 @@
 {
   "context": {
-    "date": "2022-05-29T12:57:45+00:00",
+    "date": "2022-05-29T13:01:15+00:00",
     "host_name": "atkemper4",
     "executable": "/home/elzarei/jit-regex/build/benchmark/ZRegex_BM",
     "num_cpus": 20,
-    "mhz_per_cpu": 1917,
+    "mhz_per_cpu": 3817,
     "cpu_scaling_enabled": false,
     "caches": [
       {
@@ -32,7 +32,7 @@
         "num_sharing": 20
       }
     ],
-    "load_avg": [0.47,0.41,0.42],
+    "load_avg": [0.36,0.46,0.44],
     "library_build_type": "release"
   },
   "benchmarks": [
@@ -47,8 +47,8 @@
       "aggregate_name": "mean",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 8.8743263890880790e+00,
-      "cpu_time": 8.8742883362302099e+00,
+      "real_time": 8.7171561176841035e+00,
+      "cpu_time": 8.7171047372357719e+00,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "SIMD MULTIPATTERN Regex"
@@ -64,8 +64,8 @@
       "aggregate_name": "median",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 8.8770994838320672e+00,
-      "cpu_time": 8.8770314625325621e+00,
+      "real_time": 8.7233354210012468e+00,
+      "cpu_time": 8.7232899289267039e+00,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "SIMD MULTIPATTERN Regex"
@@ -81,8 +81,8 @@
       "aggregate_name": "stddev",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 1.1485540871925706e-02,
-      "cpu_time": 1.1480363962001699e-02,
+      "real_time": 3.4857445385834122e-02,
+      "cpu_time": 3.4925595728210274e-02,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "SIMD MULTIPATTERN Regex"
@@ -98,8 +98,8 @@
       "aggregate_name": "cv",
       "aggregate_unit": "percentage",
       "iterations": 3,
-      "real_time": 1.2942436832217923e-03,
-      "cpu_time": 1.2936658723530442e-03,
+      "real_time": 3.9987175766096911e-03,
+      "cpu_time": 4.0065591479041141e-03,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "SIMD MULTIPATTERN Regex"
@@ -115,8 +115,8 @@
       "aggregate_name": "mean",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 1.1301633962259322e+01,
-      "cpu_time": 1.1301596665036849e+01,
+      "real_time": 1.1773652012156127e+01,
+      "cpu_time": 1.1773598134843830e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "RE2"
@@ -132,8 +132,8 @@
       "aggregate_name": "median",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 1.1269692155016569e+01,
-      "cpu_time": 1.1269693570166552e+01,
+      "real_time": 1.1813803681701783e+01,
+      "cpu_time": 1.1813545563304375e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "RE2"
@@ -149,8 +149,8 @@
       "aggregate_name": "stddev",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 1.0800635637302257e-01,
-      "cpu_time": 1.0792548417137994e-01,
+      "real_time": 2.2227734352124329e-01,
+      "cpu_time": 2.2217624251538437e-01,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "RE2"
@@ -166,8 +166,8 @@
       "aggregate_name": "cv",
       "aggregate_unit": "percentage",
       "iterations": 3,
-      "real_time": 9.5567027505667757e-03,
-      "cpu_time": 9.5495784684356405e-03,
+      "real_time": 1.8879218044812698e-02,
+      "cpu_time": 1.8870717343227154e-02,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "RE2"
@@ -183,8 +183,8 @@
       "aggregate_name": "mean",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 3.0027743041378248e+01,
-      "cpu_time": 3.0027203630066229e+01,
+      "real_time": 2.9701565071016713e+01,
+      "cpu_time": 2.9701645307605357e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "PCRE2"
@@ -200,8 +200,8 @@
       "aggregate_name": "median",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 3.0161524594002184e+01,
-      "cpu_time": 3.0161209268245898e+01,
+      "real_time": 2.9210203049760665e+01,
+      "cpu_time": 2.9210105375558971e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "PCRE2"
@@ -217,8 +217,8 @@
       "aggregate_name": "stddev",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 3.4411562457703776e-01,
-      "cpu_time": 3.4466821481021448e-01,
+      "real_time": 8.5164293539658209e-01,
+      "cpu_time": 8.5163775615004722e-01,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "PCRE2"
@@ -234,8 +234,8 @@
       "aggregate_name": "cv",
       "aggregate_unit": "percentage",
       "iterations": 3,
-      "real_time": 1.1459923048590307e-02,
-      "cpu_time": 1.1478531902487859e-02,
+      "real_time": 2.8673335339747121e-02,
+      "cpu_time": 2.8673083505309324e-02,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "PCRE2"
@@ -251,8 +251,8 @@
       "aggregate_name": "mean",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 1.0223975158271706e+02,
-      "cpu_time": 1.0223684484361064e+02,
+      "real_time": 9.4546085802741501e+01,
+      "cpu_time": 9.4544270857209810e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA LLVM U8"
@@ -268,8 +268,8 @@
       "aggregate_name": "median",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 1.0236653459108028e+02,
-      "cpu_time": 1.0236244611131879e+02,
+      "real_time": 9.4628297586669191e+01,
+      "cpu_time": 9.4629181555221180e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA LLVM U8"
@@ -285,8 +285,8 @@
       "aggregate_name": "stddev",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 4.3260277096641814e-01,
-      "cpu_time": 4.3077311565801052e-01,
+      "real_time": 1.9013067133557290e-01,
+      "cpu_time": 1.9188487739428348e-01,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA LLVM U8"
@@ -302,8 +302,8 @@
       "aggregate_name": "cv",
       "aggregate_unit": "percentage",
       "iterations": 3,
-      "real_time": 4.2312580407281308e-03,
-      "cpu_time": 4.2134820995009606e-03,
+      "real_time": 2.0109840584226464e-03,
+      "cpu_time": 2.0295769976806650e-03,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA LLVM U8"
@@ -319,8 +319,8 @@
       "aggregate_name": "mean",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 2.8351318556642312e+01,
-      "cpu_time": 2.8319292478379818e+01,
+      "real_time": 2.8688755083696979e+01,
+      "cpu_time": 2.8640499020224539e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA LLVM U32"
@@ -336,8 +336,8 @@
       "aggregate_name": "median",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 2.8353816455907090e+01,
-      "cpu_time": 2.8352687534721074e+01,
+      "real_time": 2.8682219195869894e+01,
+      "cpu_time": 2.8638504140199657e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA LLVM U32"
@@ -353,8 +353,8 @@
       "aggregate_name": "stddev",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 7.1959901174427396e-02,
-      "cpu_time": 7.7729004413102723e-02,
+      "real_time": 1.5293634645787792e-02,
+      "cpu_time": 1.2415429046956424e-02,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA LLVM U32"
@@ -370,8 +370,8 @@
       "aggregate_name": "cv",
       "aggregate_unit": "percentage",
       "iterations": 3,
-      "real_time": 2.5381500698339909e-03,
-      "cpu_time": 2.7447368069821814e-03,
+      "real_time": 5.3308812463872775e-04,
+      "cpu_time": 4.3349206444305484e-04,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA LLVM U32"
@@ -387,8 +387,8 @@
       "aggregate_name": "mean",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 6.5670203838346382e+01,
-      "cpu_time": 5.3519229573859405e+01,
+      "real_time": 7.7022431310418753e+01,
+      "cpu_time": 6.2482017450320690e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA CPP U8"
@@ -404,8 +404,8 @@
       "aggregate_name": "median",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 6.5647550602562632e+01,
-      "cpu_time": 5.3647771096337770e+01,
+      "real_time": 7.6879291227414981e+01,
+      "cpu_time": 6.2322719410017335e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA CPP U8"
@@ -421,8 +421,8 @@
       "aggregate_name": "stddev",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 4.1461633680066184e-01,
-      "cpu_time": 2.8235216240240341e-01,
+      "real_time": 4.0362879909052168e-01,
+      "cpu_time": 4.7303077097681534e-01,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA CPP U8"
@@ -438,8 +438,8 @@
       "aggregate_name": "cv",
       "aggregate_unit": "percentage",
       "iterations": 3,
-      "real_time": 6.3136142811628920e-03,
-      "cpu_time": 5.2757142554292992e-03,
+      "real_time": 5.2404058431212257e-03,
+      "cpu_time": 7.5706705749845711e-03,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA CPP U8"
@@ -455,8 +455,8 @@
       "aggregate_name": "mean",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 2.8211935339239446e+01,
-      "cpu_time": 2.5611844611189213e+01,
+      "real_time": 2.7226271720378730e+01,
+      "cpu_time": 2.4780511834645509e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA CPP U32"
@@ -472,8 +472,8 @@
       "aggregate_name": "median",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 2.8219933072774314e+01,
-      "cpu_time": 2.5609918816883603e+01,
+      "real_time": 2.7239257290169949e+01,
+      "cpu_time": 2.4793614285671040e+01,
       "time_unit": "ns",
       "Matches": 1.5949000000000000e+04,
       "label": "DFA CPP U32"
@@ -489,8 +489,8 @@
       "aggregate_name": "stddev",
       "aggregate_unit": "time",
       "iterations": 3,
-      "real_time": 1.1508213633533752e-01,
-      "cpu_time": 5.5491053559158871e-02,
+      "real_time": 3.9816710311345517e-02,
+      "cpu_time": 4.5907263036477353e-02,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA CPP U32"
@@ -506,8 +506,8 @@
       "aggregate_name": "cv",
       "aggregate_unit": "percentage",
       "iterations": 3,
-      "real_time": 4.0792003438088120e-03,
-      "cpu_time": 2.1666168291102367e-03,
+      "real_time": 1.4624371166303651e-03,
+      "cpu_time": 1.8525550780712540e-03,
       "time_unit": "ns",
       "Matches": 0.0000000000000000e+00,
       "label": "DFA CPP U32"

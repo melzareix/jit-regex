@@ -1,46 +1,11 @@
 {
   "Suites": [
     {
-      "name": "ip",
-      "dataset": "/home/elzarei/reddit_data/dataset.txt",
-      "patterns": ["[0-9]+.[0-9]+.[0-9]+.[0-9]+"]
-    },
-    {
-      "name": "tpchlineitem",
-      "dataset": "/home/elzarei/tpch-data/out/lineitem.tbl.csv.txt",
-      "patterns": ["ular"]
-    },
-    {
-      "name": "tpchorders",
-      "dataset": "/home/elzarei/tpch-data/out/orders.tbl.csv.txt",
-      "libraries": ["re2", "dfa", "simd_multi"],
-      "patterns": ["special%packages"]
-    },
-    {
-      "name": "bad_case_simple",
-      "dataset": "/home/elzarei/bench_data/bad_case.txt",
-      "libraries": ["simd", "re2", "dfa", "kmp"],
-      "timescale": "us",
-      "patterns": ["ßääääääääääääääääääääääääääääääääääääääääääääääääää"]
-    },
-    {
-      "name": "tpchpart",
-      "dataset": "/home/elzarei/tpch-data/out/part.tbl.csv.txt",
-      "timescale": "us",
-      "patterns": ["epo"]
-    },
-    {
-      "name": "regex_dna",
-      "dataset": "/home/elzarei/jit-regex/benchmark/data/regexdna.txt",
-      "timescale": "us",
-      "patterns": ["agggtaaa|tttaccct", "[cgt]gggtaaa|tttaccc[acg]", "a[act]ggtaaa|tttacc[agt]t", "agg[act]taaa|ttta[agt]cct", "aggg[acg]aaa|ttt[cgt]ccct", "agggtaa[cgt]|[acg]ttaccct", "agggta[cgt]a|t[acg]taccct", "agggt[cgt]aa|tt[acg]accct", "ag[act]gtaaa|tttac[agt]ct"]
-    },
-    {
-      "name": "bad_case",
-      "dataset": "/home/elzarei/bench_data/bad_case.txt",
-      "libraries": ["re2", "dfa"],
-      "timescale": "ms",
-      "patterns": ["ä", "ä{1,5}", "ä{50,55}", "ä{56,}", "ßä{50}"]
+      "name": "spark_logs",
+      "dataset": "/home/elzarei/spark/logs.log",
+      "timescale": "sec",
+      "libraries": ["re2", "pcre2", "dfa"],
+      "patterns": [ "([a-zA-Z][a-zA-Z0-9]*)://([^/]+)(/[^ ]*)?", "([a-zA-Z][a-zA-Z0-9]*)://([^ /]+)(/[^ ]*)?|[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+[.][a-zA-Z0-9-.]+"]
     }
   ]
 }

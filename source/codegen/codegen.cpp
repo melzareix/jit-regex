@@ -8,6 +8,8 @@
 #include <codegen/llvm.h>
 #include <fa/special/kmp.h>
 
+#include "parser/RegExp.h"
+
 namespace ZRegex {
   void Codegen::JIT_cpp() {
     llvm::SMDiagnostic Err;
@@ -16,7 +18,7 @@ namespace ZRegex {
     module = llvm::parseIRFile(fmt::format("/tmp/{}.ll", filename_), Err, *context.getContext());
     for (auto &m : module->getFunctionList()) {
       auto fn = m.getName().str();
-      spdlog::debug("Fn {}", fn);
+      // spdlog::debug("Fn {}", fn);
       if (fn.find("traverse") != std::string::npos) {
         fnName = fn;
         break;
@@ -49,9 +51,8 @@ namespace ZRegex {
 
     // (2) Call clang from system to compile the file to LLVM IR
     // this is very error-prone but works for our case here as prototype
-    auto cmd = fmt::format(
-        "cd /tmp && clang-13 -std=c++14 -march=native -O2 -emit-llvm {}.cpp -o {}.ll -S", filename,
-        filename);
+    auto cmd = fmt::format("cd /tmp && clang-13 -std=c++14 -{} -emit-llvm {}.cpp -o {}.ll -S",
+                           opts_.getOptimizationLevelString(), filename, filename);
     auto exit_code = system(cmd.c_str());
     if (exit_code) {
       // handle bad exit code
@@ -74,18 +75,25 @@ namespace ZRegex {
     JIT();
   }
 
-  void Codegen::Compile(const char *pattern) {
-    if (traverse_ptr != nullptr) return;
-    auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
-    // dfa->Visualize();
-    spdlog::info("Compiling pattern {}", pattern);
+  void Codegen::GenerateCodeAndCompile(std::unique_ptr<FiniteAutomaton> dfa,
+                                       const std::string &pattern) {
     if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
-      // GenerateAndCompileCpp(nullptr, std::string(pattern), "regex");
+      GenerateAndCompileCpp(std::move(dfa), std::string(pattern), "regex");
+    } else {
+      GenerateAndCompileLLVM(std::move(dfa));
+    }
+    FiniteAutomatonState::ResetCounter();
+    JIT();
+  }
+  void Codegen::Compile(const char *pattern) {
+    auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
+    if (opts_.GetBackendType() == CodegenOpts::CodegenBackendType::CPP) {
       GenerateAndCompileCpp(std::move(dfa), std::string(pattern), "regex");
     } else {
       auto dfa = RegExp::GetAutomatonForPattern(pattern, opts_.IsByteDFA());
       GenerateAndCompileLLVM(std::move(dfa));
     }
+    FiniteAutomatonState::ResetCounter();
     JIT();
   }
 
