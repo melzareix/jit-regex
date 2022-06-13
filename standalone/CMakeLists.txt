@@ -26,7 +26,7 @@ IF(SSE3_FOUND)
     ENDIF(SSSE3_FOUND)
 ENDIF(SSE3_FOUND)
 
-IF(SSE4_1_FOUND)
+IF(SSE4_2_FOUND)
         message("found sse4_2")
         SET(CMAKE_C_FLAGS -march=native)
         # SET(CXX_DFLAGS -msse4.2 -mpopcnt -mavx -madx)
