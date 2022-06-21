@@ -82,7 +82,8 @@ namespace ZRegex {
         isComplex = true;
         return "";
       }
-      if (context->Wildcard()) {
+
+      if (context->Wildcard() || context->getText() == "%") {
         return std::string("%");
       }
       return context->character()->accept(this).as<std::string>();

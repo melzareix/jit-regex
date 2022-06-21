@@ -189,23 +189,6 @@ namespace ZRegex {
       return ZRegex::FAFactory::StringAutomaton(context->value->getText());
     }
 
-    antlrcpp::Any visitCcEscapedChar(RegexParser::CcEscapedCharContext *context) {
-      if (byte_dfa_utf8_) {
-        if (context->value->getText() == "n") {
-          return ZRegex::FAFactory::ByteAutomaton("\n");
-        }
-        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
-      }
-      return ZRegex::FAFactory::StringAutomaton(context->value->getText());
-    }
-
-    antlrcpp::Any visitCcUnescapedChar(RegexParser::CcUnescapedCharContext *context) {
-      if (byte_dfa_utf8_) {
-        return ZRegex::FAFactory::ByteAutomaton(context->value->getText());
-      }
-      return ZRegex::FAFactory::StringAutomaton(context->value->getText());
-    }
-
     antlrcpp::Any visitClassMember(RegexParser::ClassMemberContext *context) override {
       if (context->range()) {
         return std::move(context->range()->accept(this).as<std::unique_ptr<FiniteAutomaton>>());
