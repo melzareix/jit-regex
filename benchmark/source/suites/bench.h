@@ -163,8 +163,8 @@ static void BENCH_SIMD_MULTIPATTERN(benchmark::State& state, const std::string& 
   auto patterns = SplitString(pattern, "%");
 
   for (auto _ : state) {
-    auto epsm1 = ZRegex::EPSMMatcher(patterns[0].c_str(), patterns[0].size());
-    auto epsm2 = ZRegex::EPSMMatcher(patterns[1].c_str(), patterns[1].size());
+    auto epsm1 = ZRegex::EPSMMatcher(patterns[0]);
+    auto epsm2 = ZRegex::EPSMMatcher(patterns[1]);
     INIT;
     while (getline(st, line)) {
       auto p1 = epsm1.epsma_elz_early(line.c_str(), line.size());
